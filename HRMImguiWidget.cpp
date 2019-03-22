@@ -172,6 +172,18 @@ void HRMImguiWidget::buildInterface()
 	}
 	else if (pHRM->m_mission_state == HRM::State_Plan_Flight)
 	{
+		ImGui::Text("New Mission:");
+		ImGui::Text(pHRM->mp_cm_mission->m_name.c_str());
+		ImGui::Text(pHRM->mp_cm_mission->m_start_text.c_str());  // Bei 50 abschneiden
+		ImGui::Text(std::to_string(pHRM->mp_cm_mission->m_ld_latitude).c_str());
+		ImGui::Text(std::to_string(pHRM->mp_cm_mission->m_ld_longitude).c_str());
+		ImGui::Text(std::to_string(pHRM->mp_cm_mission->m_lf_heading).c_str());
+
+		if (ImGui::Button("Start Mission", ImVec2(410, 20)))
+		{
+			pHRM->MissionStart();
+		}
+
 
 	}
 	else if (pHRM->m_mission_state == HRM::State_Pre_Flight)

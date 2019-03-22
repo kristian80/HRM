@@ -16,6 +16,7 @@ public:
 
 	std::string m_system_path = "";
 	std::string m_scenery_file = "";
+	std::string m_config_path = "";
 	//int m_scenery_number = 1;
 
 	std::shared_ptr<HRMImguiWidget> imguiPtr;
@@ -31,12 +32,12 @@ public:
 	std::vector<HRM_Waypoint *> m_sling_waypoints;
 
 	bool m_street_enable = true;
-	bool m_urban_enable = true;
-	bool m_sar_enable = true;
+	bool m_urban_enable = false;
+	bool m_sar_enable = false;
 	bool m_sling_enable = false;
 
 
-	HRM_Mission *mp_current_mission = NULL;
+	//HRM_Mission *mp_current_mission = NULL;
 
 	
 
@@ -86,6 +87,9 @@ public:
 
 	bool m_cm_creation_failed = false;
 	bool m_cm_no_waypoint_found = false;
+
+	HRM_Waypoint *mp_cm_waypoint = NULL;
+	HRM_Mission *mp_cm_mission = NULL;
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// Mission Status
@@ -221,7 +225,7 @@ public:
 	void MissionCancel();
 
 	
-
+	void ReadWaypoints(std::vector<HRM_Waypoint *> &waypoint_vector, std::string file_name);
 
 	void SaveMissions();
 	void ReadMissions();
