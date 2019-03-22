@@ -88,6 +88,46 @@ namespace HRM
 
 	const float fse_min_park_brake = 0.5;
 
+	const float coord_invalid = -10000;
+
+	enum Mission_State
+	{
+		State_Create_Mission,
+		State_Plan_Flight,
+		State_Pre_Flight,
+		State_Flight_1,
+		State_At_Patient,
+		State_Patient_Loaded,
+		State_Flight_2,
+		State_Mission_Finished,
+		State_Mission_Cancelled
+	};
+
+	enum Difficulty
+	{
+		Easy,
+		Normal,
+		Hard
+	};
+
+	enum Scenario_Position
+	{
+		Scenairo_Aircraft,
+		Scenario_ICAO
+	};
+
+	const float m_threshold_gf_low = 0;
+	const float m_threshold_gf_med = 0;
+	const float m_threshold_gf_high = 0;
+
+	const float m_threshold_gs_low = 0;
+	const float m_threshold_gs_med = 0;
+	const float m_threshold_gs_high = 0;
+
+	const float m_threshold_gv_low = 0;
+	const float m_threshold_gv_med = 0;
+	const float m_threshold_gv_high = 0;
+
 }
 
 

@@ -1,5 +1,5 @@
 #include "HRMImguiWidget.h"
-#include "HRM_Editor.h"
+#include "HRM_PlugIn.h"
 #include "HRM_Mission.h"
 #include <boost/range/adaptor/reversed.hpp>
 
@@ -15,7 +15,7 @@ HRMImguiWidget::HRMImguiWidget(HRM_PlugIn *pHRMNew, int left, int top, int right
 	ImgWindow(left, top, right, bot, decoration)
 {
 	pHRM = pHRMNew;
-	SetWindowTitle("HRM Mission Editor");
+	SetWindowTitle("HRM");
 	SetVisible(false);
 	//configureImguiContext();
 }
@@ -62,6 +62,146 @@ void HRMImguiWidget::buildInterface()
 {
 	win_width = ImGui::GetWindowWidth();
 	win_height = ImGui::GetWindowHeight();
+
+	ImVec4 color_red = ImColor(255, 0, 0);
+	ImVec4 color_yellow = ImColor(255, 255, 0);
+	ImVec4 color_green = ImColor(0, 255, 0);
+
+	if (pHRM->m_mission_state == HRM::State_Create_Mission)
+	{
+		ImGui::Columns(2, 0, true);
+
+		ImGui::SetColumnWidth(-1, 180);
+
+		ImGui::Text("Difficulty:"); 
+		if (ImGui::RadioButton("Easy", pHRM->m_difficutly == HRM::Easy))		pHRM->m_difficutly = HRM::Easy;
+		if (ImGui::RadioButton("Normal", pHRM->m_difficutly == HRM::Normal))	pHRM->m_difficutly = HRM::Normal;
+		if (ImGui::RadioButton("Hard", pHRM->m_difficutly == HRM::Hard))		pHRM->m_difficutly = HRM::Hard;
+
+		ImGui::Checkbox("Street Accidents", &(pHRM->m_street_enable));
+		ImGui::Checkbox("Urban Accidents", &(pHRM->m_urban_enable));
+		ImGui::Checkbox("Search and Rescue", &(pHRM->m_sar_enable));
+		ImGui::Checkbox("Sling Rescue", &(pHRM->m_sling_enable));
+
+		ImGui::NextColumn();
+
+		ImGui::Text("Scenario Position:");
+
+		if (ImGui::RadioButton("Aircraft Position", pHRM->m_cm_use_position == HRM::Scenairo_Aircraft))
+			pHRM->m_cm_use_position = HRM::Scenairo_Aircraft;
+
+
+		if (ImGui::RadioButton("Use ICAO", pHRM->m_cm_use_position == HRM::Scenario_ICAO))
+			pHRM->m_cm_use_position = HRM::Scenario_ICAO;
+
+		
+
+		//ImGui::SameLine();
+		ImGui::PushItemWidth(100);
+		ImGui::InputText("Scenario ICAO", &(pHRM->m_cm_scenario_icao));
+		ImGui::PopItemWidth();
+
+		if (pHRM->m_cm_use_position == HRM::Scenario_ICAO)
+		{
+			if (pHRM->m_mission_scenario_icao_found == true)
+			{
+				ImGui::PushStyleColor(ImGuiCol_Text, color_green);
+				ImGui::Text(pHRM->m_mission_scenario_icao_name.c_str());
+				ImGui::PopStyleColor();
+			}
+			else
+			{
+				ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+				ImGui::Text("ICAO NOT Found");
+				ImGui::PopStyleColor();
+			}
+
+		}
+
+		ImGui::Checkbox("FSEconomy", &(pHRM->m_cm_enable_fse));
+
+		if (pHRM->m_cm_enable_fse == false)
+		{
+			ImGui::PushItemWidth(100);
+			ImGui::InputInt("Min Distance [nm]", &(pHRM->m_cm_min_distance), 1, 1);
+			//ImGui::SameLine();
+			ImGui::InputInt("Max Distance [nm]", &(pHRM->m_cm_max_distance), 1, 1);
+			ImGui::PopItemWidth();
+		}
+		ImGui::PushItemWidth(100);
+		ImGui::InputText("Hospital ICAO", &(pHRM->m_cm_hospital_icao));
+		ImGui::PopItemWidth();
+
+		if (pHRM->m_mission_hospital_icao_found == true)
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, color_green);
+			ImGui::Text(pHRM->m_mission_hospital_icao_name.c_str());
+			ImGui::PopStyleColor();
+		}
+		else
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+			ImGui::Text("ICAO NOT Found");
+			ImGui::PopStyleColor();
+		}
+
+		ImGui::Columns(1, 0, true);
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+		ImGui::PushItemWidth(50);
+		ImGui::InputText("ICAO", &(pHRM->m_custom_icao));
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+		if (ImGui::Button("Save ACF Location as Hospital", ImVec2(230, 20)))
+		{
+			
+		}
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+		//ImGui::PushItemWidth(100);
+		if (ImGui::Button("Create Mission", ImVec2(410, 20)))
+		{
+			pHRM->MissionCreate();
+		}
+		//ImGui::PopItemWidth();
+		
+
+	}
+	else if (pHRM->m_mission_state == HRM::State_Plan_Flight)
+	{
+
+	}
+	else if (pHRM->m_mission_state == HRM::State_Pre_Flight)
+	{
+
+	}
+	else if (pHRM->m_mission_state == HRM::State_Flight_1)
+	{
+
+	}
+	else if (pHRM->m_mission_state == HRM::State_At_Patient)
+	{
+
+	}
+	else if (pHRM->m_mission_state == HRM::State_Patient_Loaded)
+	{
+
+	}
+	else if (pHRM->m_mission_state == HRM::State_Flight_2)
+	{
+
+	}
+	else if (pHRM->m_mission_state == HRM::State_Mission_Finished)
+	{
+
+	}
+	else if (pHRM->m_mission_state == HRM::State_Mission_Cancelled)
+	{
+
+	}
 
 	
 

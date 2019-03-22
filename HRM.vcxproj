@@ -157,14 +157,14 @@
     <ClCompile Include="E:\Docs\Games\X-Plane\Ivy\xsb_public\ImgWindow.cpp" />
     <ClCompile Include="HRMImguiWidget.cpp" />
     <ClCompile Include="HRM_ME_main.cpp" />
-    <ClCompile Include="HRM_Editor.cpp" />
+    <ClCompile Include="HRM_PlugIn.cpp" />
     <ClCompile Include="HRM_Mission.cpp" />
     <ClCompile Include="HRM_Object.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HRM.h" />
     <ClInclude Include="HRMImguiWidget.h" />
-    <ClInclude Include="HRM_Editor.h" />
+    <ClInclude Include="HRM_PlugIn.h" />
     <ClInclude Include="HRM_Mission.h" />
     <ClInclude Include="HRM_Object.h" />
   </ItemGroup>

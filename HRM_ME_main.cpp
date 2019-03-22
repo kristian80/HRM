@@ -5,7 +5,7 @@
 #include "XPLMUtilities.h"
 #include "XPLMProcessing.h"
 #include "XPLMPlugin.h"
-#include "HRM_Editor.h"
+#include "HRM_PlugIn.h"
 #include "HRM.h"
 
 // OS X: we use this to convert our file path.
@@ -21,7 +21,7 @@
 /**************************************************************************************************************
  * Global Variables 
  **************************************************************************************************************/
-HRM_Editor * pHRM;
+HRM_PlugIn * pHRM;
 std::ofstream hrm_output_file;
 
 
@@ -66,7 +66,7 @@ PLUGIN_API int XPluginStart(char * name, char * sig, char * desc)
 
 	hrm_output_file.open("HRMLog.txt");
 
-	pHRM = new HRM_Editor();
+	pHRM = new HRM_PlugIn();
 
 	if (sizeof(unsigned int) != 4 ||
 		sizeof(unsigned short) != 2)
