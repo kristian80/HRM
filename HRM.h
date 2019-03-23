@@ -90,6 +90,8 @@ namespace HRM
 
 	const float coord_invalid = -10000;
 
+	const int type_sling = 3;
+
 	enum Mission_State
 	{
 		State_Create_Mission,
@@ -116,17 +118,45 @@ namespace HRM
 		Scenario_ICAO
 	};
 
-	const float m_threshold_gf_low = 0;
-	const float m_threshold_gf_med = 0;
-	const float m_threshold_gf_high = 0;
+	const float preflight_time_easy = 300;
+	const float preflight_time_normal = 150;
+	const float preflight_time_hard = 90;
 
-	const float m_threshold_gs_low = 0;
-	const float m_threshold_gs_med = 0;
-	const float m_threshold_gs_high = 0;
+	const float flight_time_up_down_easy = 60;
+	const float flight_time_up_down_normal = 45;
+	const float flight_time_up_down_hard = 30;
 
-	const float m_threshold_gv_low = 0;
-	const float m_threshold_gv_med = 0;
-	const float m_threshold_gv_high = 0;
+	const float flight_time_per_nm_easy = 60;
+	const float flight_time_per_nm_normal = 45;
+	const float flight_time_per_nm_hard = 30;
+
+	const float flight_time_search_easy = 300;
+	const float flight_time_search_normal = 180;
+	const float flight_time_search_hard = 150;
+
+	const float flight_time_sling_easy = 600;
+	const float flight_time_sling_normal = 300;
+	const float flight_time_sling_hard = 150;
+
+	const float threshold_g_mult_easy = 1.3;
+	const float threshold_g_mult_normal = 1.15;
+	const float threshold_g_mult_hard = 1;
+
+	const float threshold_g_mult_flight1 = 1.2;
+
+	const float threshold_g_mult_flight2 = 1;
+
+	const float threshold_gf_low = 0;
+	const float threshold_gf_med = 0;
+	const float threshold_gf_high = 0;
+
+	const float threshold_gs_low = 0;
+	const float threshold_gs_med = 0;
+	const float threshold_gs_high = 0;
+
+	const float threshold_gv_low = 0;
+	const float threshold_gv_med = 0;
+	const float threshold_gv_high = 0;
 
 }
 

@@ -23,6 +23,25 @@ HRM_PlugIn::~HRM_PlugIn()
 	
 }
 
+std::string HRM_PlugIn::CreateTimeString(float time_float)
+{
+	int time_int = time_float;
+
+	int seconds = time_int % 60;
+	time_int -= seconds;
+
+	int minutes = time_int / 60;
+
+	std::string time_string = "";
+	if (minutes < 10) time_string += "0";
+	time_string += std::to_string(minutes) + ":";
+
+	if (seconds < 10) time_string += "0";
+	time_string += std::to_string(seconds);
+
+	return time_string;
+}
+
 
 
 void HRM_PlugIn::PluginStart()
@@ -35,8 +54,11 @@ void HRM_PlugIn::PluginStart()
 	XPLMGetSystemPath(buffer);
 	m_system_path = buffer;
 
-	m_scenery_file = m_system_path + m_ds + "Resources" + m_ds + "plugins" + m_ds + "HRM" + m_ds + "scenery";
-	m_config_path = m_system_path + m_ds + "Resources" + m_ds + "plugins" + m_ds + "HRM" + m_ds;
+	
+	m_config_path = m_system_path +  "Resources" + m_ds + "plugins" + m_ds + "HRM" + m_ds;
+	m_scenery_file = m_config_path + "scenery";
+
+	m_fms_file = m_system_path + "Output" + m_ds + "FMS plans" + m_ds + "HRM.fms";
 
 
 	srand(time(NULL));
@@ -98,7 +120,7 @@ void HRM_PlugIn::PluginStart()
 	m_f_weight_total = XPLMFindDataRef("sim/flightmodel/weight/m_total");
 
 	m_i_on_ground = XPLMFindDataRef("sim/flightmodel/failures/onground_any");
-	m_fa_engines_running = XPLMFindDataRef("sim/flightmodel/engine/ENGN_running");
+	m_ia_engines_running = XPLMFindDataRef("sim/flightmodel/engine/ENGN_running");
 	m_f_park_brake = XPLMFindDataRef("sim/cockpit2/controls/parking_brake_ratio");
 
 	m_f_climb_rate = XPLMFindDataRef("sim/flightmodel/position/vh_ind_fpm");
@@ -409,7 +431,7 @@ void HRM_PlugIn::MissionCreate()
 	// TODO: Remove all Waypoints outside range!!!!
 	// TODO: FSE Airports
 
-	// TODO: Create Flightplan
+	CreateFlightPlan();
 
 	pHRM->m_mission_state = HRM::State_Plan_Flight;
 
@@ -419,16 +441,140 @@ void HRM_PlugIn::MissionCreate()
 
 void HRM_PlugIn::MissionStart()
 {
-	pHRM->m_mission_state = HRM::State_Create_Mission;
+	m_cm_not_on_ground = false;
 
+	if (m_li_on_ground == 0)
+	{
+		m_cm_not_on_ground = true;
+		return;
+	}
+
+	if ((m_li_battery_on == 0) && (m_lia_engines_running[0] == 0) && (m_lia_engines_running[1] == 0))
+	{
+		if (m_difficutly == HRM::Hard) m_mission_preflight_time = HRM::preflight_time_hard;
+		else if (m_difficutly == HRM::Normal) m_mission_preflight_time = HRM::preflight_time_normal;
+		else m_mission_preflight_time = HRM::preflight_time_easy;
+
+		pHRM->m_mission_state = HRM::State_Pre_Flight;
+	}
+	else
+	{
+		m_mission_preflight_time = 0;
+		MissionStartFlight1();
+	}
+
+
+	
+
+}
+
+void HRM_PlugIn::MissionStartFlight1()
+{
+	double distance = abs(calc_distance_nm(m_ld_latitude, m_ld_longitude, mp_cm_waypoint->latitude, mp_cm_waypoint->longitude));
+
+	
+	m_mission_flight1_time = m_mission_preflight_time > 0 ? m_mission_preflight_time : 0;
+
+	if (m_difficutly == HRM::Hard) 
+		m_mission_flight1_time +=	(2 * HRM::flight_time_up_down_hard) + 
+									(distance * HRM::flight_time_per_nm_hard) + 
+									(m_cm_estmimated_wp? HRM::flight_time_search_hard:0) + 
+									(mp_cm_mission->m_mission_type == HRM::type_sling?HRM::flight_time_sling_hard:0);
+	else if (m_difficutly == HRM::Normal) 
+		m_mission_flight1_time +=	(2 * HRM::flight_time_up_down_normal) +
+									(distance * HRM::flight_time_per_nm_normal) +
+									(m_cm_estmimated_wp ? HRM::flight_time_search_normal : 0) +
+									(mp_cm_mission->m_mission_type == HRM::type_sling ? HRM::flight_time_sling_normal : 0);
+	else m_mission_flight1_time +=	(2 * HRM::flight_time_up_down_easy) +
+									(distance * HRM::flight_time_per_nm_easy) +
+									(m_cm_estmimated_wp ? HRM::flight_time_search_easy : 0) +
+									(mp_cm_mission->m_mission_type == HRM::type_sling ? HRM::flight_time_sling_easy : 0);
+
+	pHRM->m_mission_state = HRM::State_Flight_1;
 }
 
 void HRM_PlugIn::MissionReset()
 {
+	if (mp_cm_mission != NULL) mp_cm_mission->RemoveMission();
+
+	m_mission_preflight_time = 0;
+	m_mission_flight1_time = 0;
+	m_mission_flight2_time = 0;
+
+	m_mission_gf_low = 0;
+	m_mission_gf_med = 0;
+	m_mission_gf_high = 0;
+
+	m_mission_gs_low = 0;
+	m_mission_gs_med = 0;
+	m_mission_gs_high = 0;
+
+	m_mission_gv_low = 0;
+	m_mission_gv_med = 0;
+	m_mission_gv_high = 0;
+
+	m_cm_creation_failed = false;
+	m_cm_no_waypoint_found = false;
+	m_cm_cancelling = false;
+	m_cm_not_on_ground = false;
+
+	mp_cm_waypoint = NULL;
+	mp_cm_mission = NULL;
 }
 
 void HRM_PlugIn::MissionCancel()
 {
+	MissionReset();
+	pHRM->m_mission_state = HRM::State_Create_Mission;
+}
+
+void HRM_PlugIn::CreateFlightPlan()
+{
+	std::ofstream fms_file;
+	fms_file.open(m_fms_file, std::ios::out);
+
+	if (fms_file.is_open())
+	{
+		fms_file << "I" << std::endl;
+		fms_file << "1100 Version" << std::endl;
+		fms_file << "CYCLE " << m_cm_airac_cycle << std::endl;
+		fms_file << "DEP " << std::endl;
+		fms_file << "DES " << std::endl;
+		fms_file << "NUMENR 3" << std::endl;
+
+		fms_file.precision(9);
+
+		fms_file  << "28 " << "START DEP 25000.000000 " << m_ld_latitude << " " << m_ld_longitude<< std::endl;
+
+		double wp_latitude = mp_cm_waypoint->latitude;
+		double wp_longitude = mp_cm_waypoint->longitude;
+
+		if (m_cm_estmimated_wp == true)
+		{
+			double deviation_lat_meter = (rand() % m_cm_estimated_radius_m) - (m_cm_estimated_radius_m / 2);
+			double deviation_long_meter = (rand() % m_cm_estimated_radius_m) - (m_cm_estimated_radius_m / 2);
+
+			double meter_latitude = 0;
+			double meter_longitude = 0;
+
+			HRM_Object::GetDegreesPerMeter(mp_cm_waypoint->latitude, mp_cm_waypoint->longitude, meter_latitude, meter_longitude);
+
+			wp_latitude += deviation_lat_meter * meter_latitude;
+			wp_longitude += deviation_long_meter * meter_longitude;
+		}
+
+		fms_file  << "28 " << "SCENE DEP 25000.000000 " << wp_latitude << " " << wp_longitude << std::endl;
+
+		fms_file  << "28 " << "HOSP DEP 25000.000000 " << m_mission_hospital_lat << " " << m_mission_hospital_long << std::endl;
+
+
+		fms_file.close();
+	}
+	else
+	{
+		HRMDebugString("Could not write FMS file");
+	}
+
 }
 
 void HRM_PlugIn::ReadFSEAirports()
@@ -703,7 +849,7 @@ void HRM_PlugIn::ReadDataSlow()
 	m_lf_weight_total = XPLMGetDataf(m_f_weight_total);
 
 	m_li_on_ground = XPLMGetDatai(m_i_on_ground);
-	XPLMGetDatavf(m_fa_engines_running, m_lfa_engines_running, 0, 2);
+	XPLMGetDatavi(m_ia_engines_running, m_lia_engines_running, 0, 2);
 	m_lf_park_brake = XPLMGetDataf(m_f_park_brake);
 
 	m_lf_climb_rate = XPLMGetDataf(m_f_climb_rate);
@@ -893,6 +1039,16 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			else if (m_mission_state == HRM::State_Pre_Flight)
 			{
 
+				m_mission_preflight_time -= m_time_delta;
+				if (m_mission_preflight_time <= 0)
+				{
+					m_mission_preflight_time = 0;
+					MissionStartFlight1();
+				}
+				if (m_li_on_ground == 0)
+				{
+					MissionStartFlight1();
+				}
 			}
 			else if (m_mission_state == HRM::State_Flight_1)
 			{

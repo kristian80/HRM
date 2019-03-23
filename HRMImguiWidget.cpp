@@ -134,6 +134,10 @@ void HRMImguiWidget::buildInterface()
 			ImGui::InputInt("Max Distance [nm]", &(pHRM->m_cm_max_distance), 1, 1);
 			ImGui::PopItemWidth();
 		}
+
+		ImGui::Checkbox("Panic Call", &(pHRM->m_cm_estmimated_wp));
+		
+
 		ImGui::PushItemWidth(100);
 		ImGui::InputText("Hospital ICAO", &(pHRM->m_cm_hospital_icao));
 		ImGui::PopItemWidth();
@@ -192,22 +196,143 @@ void HRMImguiWidget::buildInterface()
 	}
 	else if (pHRM->m_mission_state == HRM::State_Plan_Flight)
 	{
-		ImGui::Text("New Mission:");
-		ImGui::Text(pHRM->mp_cm_mission->m_name.c_str());
-		ImGui::Text(pHRM->mp_cm_mission->m_start_text.c_str());  // Bei 50 abschneiden
-		ImGui::Text(std::to_string(pHRM->mp_cm_mission->m_ld_latitude).c_str());
-		ImGui::Text(std::to_string(pHRM->mp_cm_mission->m_ld_longitude).c_str());
-		ImGui::Text(std::to_string(pHRM->mp_cm_mission->m_lf_heading).c_str());
+		ImGui::Text("Mission Status: Flight Planning");
+		ImGui::Separator();
+
+		ImGui::PushStyleColor(ImGuiCol_Text, color_green);
+		ImGui::TextWrapped("You have now time for detailed flight planning.");
+		ImGui::TextWrapped("The mission flight plan was saved under following path:");
+		ImGui::TextWrapped(pHRM->m_fms_file.c_str());
+		ImGui::TextWrapped("Feel free to load it into your flight planning software to create a more detailed route.");
+		ImGui::PopStyleColor();
+
+		ImGui::Separator();
+
+		ImGui::Text("Mission Name:");
+		ImGui::TextWrapped(pHRM->mp_cm_mission->m_name.c_str());
+		ImGui::Separator();
+		ImGui::Text("Mission Objective:");
+		ImGui::TextWrapped(pHRM->mp_cm_mission->m_start_text.c_str());  // Bei 50 abschneiden
+		ImGui::Separator();
+		if (pHRM->m_cm_estmimated_wp)
+		{
+			ImGui::TextWrapped("The calling party was in panic and only gave us a rough estimate for the position");
+			ImGui::Separator();
+		}
+		//ImGui::Text(std::to_string(pHRM->mp_cm_mission->m_ld_latitude).c_str());
+		//ImGui::Text(std::to_string(pHRM->mp_cm_mission->m_ld_longitude).c_str());
+		//ImGui::Text(std::to_string(pHRM->mp_cm_mission->m_lf_heading).c_str());
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
 
 		if (ImGui::Button("Start Mission", ImVec2(410, 20)))
 		{
+			pHRM->m_cm_cancelling = false;
 			pHRM->MissionStart();
 		}
+
+		if (pHRM->m_cm_not_on_ground == true)
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+			ImGui::Text("Aircraft already Airborne");
+			ImGui::PopStyleColor();
+		}
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+		ImGui::Spacing();
+		ImGui::Spacing();
+		ImGui::Spacing();
+		ImGui::Spacing();
+
+		if (pHRM->m_cm_cancelling == false)
+		{
+			if (ImGui::Button("Cancel Mission", ImVec2(410, 20)))
+			{
+				pHRM->m_cm_cancelling = true;
+			}
+		}
+		else
+		{
+			if (ImGui::Button("Are you sure?", ImVec2(200, 20)))
+			{
+				pHRM->MissionCancel();
+				pHRM->m_cm_cancelling = false;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Continue", ImVec2(200, 20)))
+			{
+				pHRM->m_cm_cancelling = false;
+			}
+		}
+
+		
 
 
 	}
 	else if (pHRM->m_mission_state == HRM::State_Pre_Flight)
 	{
+		ImGui::Text("Mission Status: Aircraft Startup");
+		
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		ImGui::Text("Mission Objective:");
+		ImGui::TextWrapped(pHRM->mp_cm_mission->m_start_text.c_str());  // Bei 50 abschneiden
+		ImGui::Separator();
+		if (pHRM->m_cm_estmimated_wp)
+		{
+			ImGui::TextWrapped("The calling party was in panic and only gave us a rough estimate for the position");
+			ImGui::Separator();
+		}
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
+
+		if (pHRM->m_mission_preflight_time < 15) ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+		else if (pHRM->m_mission_preflight_time < 30) ImGui::PushStyleColor(ImGuiCol_Text, color_yellow);
+		else ImGui::PushStyleColor(ImGuiCol_Text, color_green);
+
+		ImGui::Text("Pre-Flight Time Remaining: ");
+		ImGui::SameLine();
+		ImGui::Text(HRM_PlugIn::CreateTimeString(pHRM->m_mission_preflight_time).c_str());
+
+		ImGui::PopStyleColor();
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		ImGui::Spacing();
+		ImGui::Spacing();
+		ImGui::Spacing();
+		ImGui::Spacing();
+
+		if (pHRM->m_cm_cancelling == false)
+		{
+			if (ImGui::Button("Cancel Mission", ImVec2(410, 20)))
+			{
+				pHRM->m_cm_cancelling = true;
+			}
+		}
+		else
+		{
+			if (ImGui::Button("Are you sure?", ImVec2(200, 20)))
+			{
+				pHRM->MissionCancel();
+				pHRM->m_cm_cancelling = false;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Continue", ImVec2(200, 20)))
+			{
+				pHRM->m_cm_cancelling = false;
+			}
+		}
 
 	}
 	else if (pHRM->m_mission_state == HRM::State_Flight_1)

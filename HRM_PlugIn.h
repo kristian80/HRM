@@ -17,6 +17,7 @@ public:
 	std::string m_system_path = "";
 	std::string m_scenery_file = "";
 	std::string m_config_path = "";
+	std::string m_fms_file = "";
 	//int m_scenery_number = 1;
 
 	std::shared_ptr<HRMImguiWidget> imguiPtr;
@@ -64,6 +65,7 @@ public:
 	// Saved
 
 	float m_cm_collective_min = 0.1;
+	int m_cm_airac_cycle = 1809;
 
 	int m_cm_mission_type = 0;
 
@@ -90,6 +92,8 @@ public:
 
 	bool m_cm_creation_failed = false;
 	bool m_cm_no_waypoint_found = false;
+	bool m_cm_cancelling = false;
+	bool m_cm_not_on_ground = false;
 
 	HRM_Waypoint *mp_cm_waypoint = NULL;
 	HRM_Mission *mp_cm_mission = NULL;
@@ -157,7 +161,7 @@ public:
 	XPLMDataRef m_f_weight_total;
 
 	XPLMDataRef m_i_on_ground;
-	XPLMDataRef m_fa_engines_running;
+	XPLMDataRef m_ia_engines_running;
 	XPLMDataRef m_f_park_brake;
 
 	XPLMDataRef m_f_climb_rate;
@@ -192,7 +196,7 @@ public:
 	float m_lf_weight_total;
 
 	int m_li_on_ground;
-	float m_lfa_engines_running[2];
+	int m_lia_engines_running[2];
 	float m_lf_park_brake;
 
 	float m_lf_climb_rate;
@@ -210,6 +214,8 @@ public:
 	HRM_PlugIn();
 	~HRM_PlugIn();
 
+	static std::string CreateTimeString(float time_float);
+
 	void PluginStart();
 	void PluginStop();
 	void PluginEnable();
@@ -224,8 +230,11 @@ public:
 
 	void MissionCreate();
 	void MissionStart();
+	void MissionStartFlight1();
 	void MissionReset();
 	void MissionCancel();
+
+	void CreateFlightPlan();
 
 	void ReadFSEAirports();
 	void ReadWaypoints(std::vector<HRM_Waypoint *> &waypoint_vector, std::string file_name);
