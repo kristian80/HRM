@@ -85,6 +85,10 @@ public:
 
 	int m_difficutly = HRM::Normal;
 	float m_position_calc_rate = 0.5;
+	float m_patient_countdown_value = 30;
+	float m_patient_fse_finish_value = 20;
+	float m_patient_fse_restart_value = 10;
+	float m_hospital_countdown_value = 7;
 
 	
 
@@ -103,6 +107,7 @@ public:
 
 	HRM::Mission_State m_mission_state = HRM::State_Create_Mission;
 	float m_mission_time = 0;
+	bool m_mission_time_failed = false;
 
 	bool m_mission_scenario_icao_found = false;
 	bool m_mission_hospital_icao_found = false;
@@ -120,9 +125,23 @@ public:
 	bool m_custom_hospital_icao_empty = false;
 	
 
-	float m_mission_preflight_time = 0;
+	float m_mission_preflight_countdown = 0;
+	float m_mission_flight1_countdown = 0;
+	float m_mission_flight2_countdown = 0;
+	float m_mission_at_patient_countdown = 0;
+	float m_mission_at_hospital_countdown = 0;
+
 	float m_mission_flight1_time = 0;
 	float m_mission_flight2_time = 0;
+
+	float m_mission_flight1_distance = 0;
+	float m_mission_flight2_distance = 0;
+
+	int m_mission_flight1_avg_speed = 0;
+	int m_mission_flight2_avg_speed = 0;
+
+
+
 
 	float m_mission_gf_low = 0;
 	float m_mission_gf_med = 0;
@@ -132,9 +151,18 @@ public:
 	float m_mission_gs_med = 0;
 	float m_mission_gs_high = 0;
 
-	float m_mission_gv_low = 0;
-	float m_mission_gv_med = 0;
-	float m_mission_gv_high = 0;
+	float m_mission_gv_pos_low = 0;
+	float m_mission_gv_pos_med = 0;
+	float m_mission_gv_pos_high = 0;
+
+	float m_mission_gv_neg_low = 0;
+	float m_mission_gv_neg_med = 0;
+	float m_mission_gv_neg_high = 0;
+
+	int m_mission_points_total = 0;
+	int m_mission_points_flight1 = 0;
+	int m_mission_points_flight2 = 0;
+	int m_mission_points_g_force = 0;
 
 
 
@@ -231,6 +259,8 @@ public:
 	void MissionCreate();
 	void MissionStart();
 	void MissionStartFlight1();
+	void MissionStartFlight2();
+	void MissionFinish();
 	void MissionReset();
 	void MissionCancel();
 

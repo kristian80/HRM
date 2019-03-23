@@ -451,15 +451,15 @@ void HRM_PlugIn::MissionStart()
 
 	if ((m_li_battery_on == 0) && (m_lia_engines_running[0] == 0) && (m_lia_engines_running[1] == 0))
 	{
-		if (m_difficutly == HRM::Hard) m_mission_preflight_time = HRM::preflight_time_hard;
-		else if (m_difficutly == HRM::Normal) m_mission_preflight_time = HRM::preflight_time_normal;
-		else m_mission_preflight_time = HRM::preflight_time_easy;
+		if (m_difficutly == HRM::Hard) m_mission_preflight_countdown = HRM::preflight_time_hard;
+		else if (m_difficutly == HRM::Normal) m_mission_preflight_countdown = HRM::preflight_time_normal;
+		else m_mission_preflight_countdown = HRM::preflight_time_easy;
 
 		pHRM->m_mission_state = HRM::State_Pre_Flight;
 	}
 	else
 	{
-		m_mission_preflight_time = 0;
+		m_mission_preflight_countdown = 0;
 		MissionStartFlight1();
 	}
 
@@ -472,20 +472,21 @@ void HRM_PlugIn::MissionStartFlight1()
 {
 	double distance = abs(calc_distance_nm(m_ld_latitude, m_ld_longitude, mp_cm_waypoint->latitude, mp_cm_waypoint->longitude));
 
+	m_mission_flight1_distance = distance;
 	
-	m_mission_flight1_time = m_mission_preflight_time > 0 ? m_mission_preflight_time : 0;
+	m_mission_flight1_countdown = m_mission_preflight_countdown > 0 ? m_mission_preflight_countdown : 0;
 
 	if (m_difficutly == HRM::Hard) 
-		m_mission_flight1_time +=	(2 * HRM::flight_time_up_down_hard) + 
+		m_mission_flight1_countdown +=	(2 * HRM::flight_time_up_down_hard) + 
 									(distance * HRM::flight_time_per_nm_hard) + 
 									(m_cm_estmimated_wp? HRM::flight_time_search_hard:0) + 
 									(mp_cm_mission->m_mission_type == HRM::type_sling?HRM::flight_time_sling_hard:0);
 	else if (m_difficutly == HRM::Normal) 
-		m_mission_flight1_time +=	(2 * HRM::flight_time_up_down_normal) +
+		m_mission_flight1_countdown +=	(2 * HRM::flight_time_up_down_normal) +
 									(distance * HRM::flight_time_per_nm_normal) +
 									(m_cm_estmimated_wp ? HRM::flight_time_search_normal : 0) +
 									(mp_cm_mission->m_mission_type == HRM::type_sling ? HRM::flight_time_sling_normal : 0);
-	else m_mission_flight1_time +=	(2 * HRM::flight_time_up_down_easy) +
+	else m_mission_flight1_countdown +=	(2 * HRM::flight_time_up_down_easy) +
 									(distance * HRM::flight_time_per_nm_easy) +
 									(m_cm_estmimated_wp ? HRM::flight_time_search_easy : 0) +
 									(mp_cm_mission->m_mission_type == HRM::type_sling ? HRM::flight_time_sling_easy : 0);
@@ -493,11 +494,94 @@ void HRM_PlugIn::MissionStartFlight1()
 	pHRM->m_mission_state = HRM::State_Flight_1;
 }
 
+void HRM_PlugIn::MissionStartFlight2()
+{
+	double distance = abs(calc_distance_nm(m_ld_latitude, m_ld_longitude, m_mission_hospital_lat, m_mission_hospital_long));
+
+	m_mission_flight2_distance = distance;
+
+	if (m_difficutly == HRM::Hard)
+		m_mission_flight2_countdown =	(2 * HRM::flight_time_up_down_hard) +
+										(distance * HRM::flight_time_per_nm_hard) +
+										(m_cm_estmimated_wp ? HRM::flight_time_search_hard : 0) +
+										(mp_cm_mission->m_mission_type == HRM::type_sling ? HRM::flight_time_sling_hard : 0);
+	else if (m_difficutly == HRM::Normal)
+		m_mission_flight2_countdown =	(2 * HRM::flight_time_up_down_normal) +
+										(distance * HRM::flight_time_per_nm_normal) +
+										(m_cm_estmimated_wp ? HRM::flight_time_search_normal : 0) +
+										(mp_cm_mission->m_mission_type == HRM::type_sling ? HRM::flight_time_sling_normal : 0);
+	else m_mission_flight2_countdown =	(2 * HRM::flight_time_up_down_easy) +
+										(distance * HRM::flight_time_per_nm_easy) +
+										(m_cm_estmimated_wp ? HRM::flight_time_search_easy : 0) +
+										(mp_cm_mission->m_mission_type == HRM::type_sling ? HRM::flight_time_sling_easy : 0);
+
+	pHRM->m_mission_state = HRM::State_Flight_2;
+}
+
+void HRM_PlugIn::MissionFinish()
+{
+	m_mission_flight1_avg_speed = m_mission_flight1_distance / (m_mission_flight1_time / 3600);
+	m_mission_flight2_avg_speed = m_mission_flight2_distance / (m_mission_flight2_time / 3600);
+
+	float g_force_seconds = 0;
+
+	g_force_seconds += m_mission_gf_low * HRM::eval_g_low_factor;
+	g_force_seconds += m_mission_gf_med * HRM::eval_g_med_factor;
+	g_force_seconds += m_mission_gf_high * HRM::eval_g_high_factor;
+
+	g_force_seconds += m_mission_gs_low * HRM::eval_g_low_factor;
+	g_force_seconds += m_mission_gs_med * HRM::eval_g_med_factor;
+	g_force_seconds += m_mission_gs_high * HRM::eval_g_high_factor;
+
+	g_force_seconds += m_mission_gv_pos_low * HRM::eval_g_low_factor;
+	g_force_seconds += m_mission_gv_pos_med * HRM::eval_g_med_factor;
+	g_force_seconds += m_mission_gv_pos_high * HRM::eval_g_high_factor;
+
+	g_force_seconds += m_mission_gv_neg_low * HRM::eval_g_low_factor;
+	g_force_seconds += m_mission_gv_neg_med * HRM::eval_g_med_factor;
+	g_force_seconds += m_mission_gv_neg_high * HRM::eval_g_high_factor;
+
+	m_mission_points_total = 0;
+	m_mission_points_flight1 = 0;
+	m_mission_points_flight2 = 0;
+	m_mission_points_g_force = 0;
+
+
+	// If the Mission Time failed, you do not get any points
+	if (m_mission_time_failed == false)
+	{
+		m_mission_points_flight1 = min(HRM::eval_flight1_nominal_speed / ((float) m_mission_flight1_avg_speed), 1.f) * ((float) HRM::points_speed_flight1);
+		m_mission_points_flight2 = min(HRM::eval_flight2_nominal_speed / ((float)m_mission_flight2_avg_speed), 1.f) * ((float)HRM::points_speed_flight2);
+
+		m_mission_points_g_force = ((float)HRM::points_g_flight2) / (1 + g_force_seconds);
+
+		m_mission_points_total = m_mission_points_flight1 + m_mission_points_flight2 + m_mission_points_g_force;
+
+	}
+
+
+	
+
+	// points = points_g_flight2 / ((1 + seconds ) * eval_g_total_factor)
+
+
+	pHRM->m_mission_state = HRM::State_Mission_Finished;
+}
+
 void HRM_PlugIn::MissionReset()
 {
 	if (mp_cm_mission != NULL) mp_cm_mission->RemoveMission();
 
-	m_mission_preflight_time = 0;
+	m_mission_flight1_avg_speed = 0;
+	m_mission_flight2_avg_speed = 0;
+	m_mission_points_total = 0;
+
+	m_mission_preflight_countdown = 0;
+	m_mission_flight1_countdown = 0;
+	m_mission_flight2_countdown = 0;
+	m_mission_at_patient_countdown = 0;
+	m_mission_at_hospital_countdown = 0;
+
 	m_mission_flight1_time = 0;
 	m_mission_flight2_time = 0;
 
@@ -509,9 +593,13 @@ void HRM_PlugIn::MissionReset()
 	m_mission_gs_med = 0;
 	m_mission_gs_high = 0;
 
-	m_mission_gv_low = 0;
-	m_mission_gv_med = 0;
-	m_mission_gv_high = 0;
+	m_mission_gv_pos_low = 0;
+	m_mission_gv_pos_med = 0;
+	m_mission_gv_pos_high = 0;
+
+	m_mission_gv_neg_low = 0;
+	m_mission_gv_neg_med = 0;
+	m_mission_gv_neg_high = 0;
 
 	m_cm_creation_failed = false;
 	m_cm_no_waypoint_found = false;
@@ -520,6 +608,13 @@ void HRM_PlugIn::MissionReset()
 
 	mp_cm_waypoint = NULL;
 	mp_cm_mission = NULL;
+
+	m_mission_time_failed = false;
+
+	m_mission_points_total = 0;
+	m_mission_points_flight1 = 0;
+	m_mission_points_flight2 = 0;
+	m_mission_points_g_force = 0;
 }
 
 void HRM_PlugIn::MissionCancel()
@@ -697,6 +792,9 @@ void HRM_PlugIn::ReadWaypoints(std::vector<HRM_Waypoint*>& waypoint_vector, std:
 
 			bool odd_waypoint = true;
 			HRM_Waypoint *p_waypoint = new HRM_Waypoint();
+
+			double lat_correct = 0;
+			double long_correct = 0;
 			
 
 
@@ -709,6 +807,13 @@ void HRM_PlugIn::ReadWaypoints(std::vector<HRM_Waypoint*>& waypoint_vector, std:
 				
 				int line_code = 0;
 				line_stream >> line_code;
+
+				// This is my custom code to correct x-plane deviation of this specific area
+				if ((line_stream) && (line_code == 12345))
+				{
+					line_stream >> lat_correct;
+					line_stream >> long_correct;
+				}
 
 				if ((line_stream) && (line_code == 28))
 				{
@@ -724,19 +829,26 @@ void HRM_PlugIn::ReadWaypoints(std::vector<HRM_Waypoint*>& waypoint_vector, std:
 
 					if ((way_lat != HRM::coord_invalid) && (way_lat != HRM::coord_invalid))
 					{
+						// Offset Correction
+
+						double meter_latitude = 0;
+						double meter_longitude = 0;
+
+						HRM_Object::GetDegreesPerMeter(way_lat, way_long, meter_latitude, meter_longitude);
+
 						// Position Waypoint
 						if (odd_waypoint == true)
 						{
-							p_waypoint->latitude = way_lat;
-							p_waypoint->longitude = way_long;
+							p_waypoint->latitude = way_lat + (meter_latitude * lat_correct);
+							p_waypoint->longitude = way_long + (meter_longitude * long_correct);
 
 							odd_waypoint = false;
 						}
 						// Direction Waypoint
 						else
 						{
-							p_waypoint->lat_heading = way_lat;
-							p_waypoint->long_heading = way_long;
+							p_waypoint->lat_heading = way_lat + (meter_latitude * lat_correct);
+							p_waypoint->long_heading = way_long + (meter_longitude * long_correct);
 
 							waypoint_vector.push_back(p_waypoint);
 
@@ -1039,10 +1151,10 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			else if (m_mission_state == HRM::State_Pre_Flight)
 			{
 
-				m_mission_preflight_time -= m_time_delta;
-				if (m_mission_preflight_time <= 0)
+				m_mission_preflight_countdown -= m_time_delta;
+				if (m_mission_preflight_countdown <= 0)
 				{
-					m_mission_preflight_time = 0;
+					m_mission_preflight_countdown = 0;
 					MissionStartFlight1();
 				}
 				if (m_li_on_ground == 0)
@@ -1052,27 +1164,95 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			}
 			else if (m_mission_state == HRM::State_Flight_1)
 			{
+				if (m_li_on_ground == 0)
+				{
+					m_mission_flight1_countdown -= m_time_delta * m_li_sim_ground_speed;
+					m_mission_flight1_time += m_time_delta * m_li_sim_ground_speed;
 
+					if (m_mission_flight1_countdown <= 0)
+					{
+						m_mission_flight1_countdown = 0;
+						m_mission_time_failed = true;
+					}
+				}
+				else
+				{
+					// If within 100m and collective down
+					if ((calc_distance_m(m_ld_latitude, m_ld_longitude, mp_cm_waypoint->latitude, mp_cm_waypoint->longitude) < HRM::pickup_max_distance) && (m_lfa_prop_ratio[0] < m_cm_collective_min))
+					{
+						m_mission_at_patient_countdown = m_patient_countdown_value;
+						m_mission_state = HRM::State_At_Patient;
+					}
+				}
 			}
 			else if (m_mission_state == HRM::State_At_Patient)
 			{
+				// for sling load: acf_jett_is_slung
+				// create is_slingload for mission
+
+				if (m_li_on_ground == 1)
+				{
+					m_mission_at_patient_countdown -= m_time_delta;
+					if (m_mission_at_patient_countdown <= 0)
+					{
+						MissionStartFlight2();
+					}
+				}
+				else
+				{
+					m_mission_state = HRM::State_Flight_1;
+				}
 
 			}
-			else if (m_mission_state == HRM::State_Patient_Loaded)
-			{
-
-			}
+			
 			else if (m_mission_state == HRM::State_Flight_2)
 			{
+				if (m_li_on_ground == 0)
+				{
+					m_mission_flight2_countdown -= m_time_delta * m_li_sim_ground_speed;
+					m_mission_flight2_time += m_time_delta * m_li_sim_ground_speed;
 
+					if (m_mission_flight2_countdown <= 0)
+					{
+						m_mission_flight2_countdown = 0;
+						m_mission_time_failed = true;
+					}
+				}
+				else
+				{
+					// If within 100m and collective down
+					if ((calc_distance_m(m_ld_latitude, m_ld_longitude, m_mission_hospital_lat, m_mission_hospital_long) < HRM::pickup_max_distance) && (m_lfa_prop_ratio[0] < m_cm_collective_min))
+					{
+						m_mission_at_patient_countdown = m_patient_countdown_value;
+						m_mission_state = HRM::State_At_Hospital;
+					}
+				}
+			}
+			else if (m_mission_state == HRM::State_At_Hospital)
+			{
+				if (m_li_on_ground == 0)
+				{
+					m_mission_at_hospital_countdown -= m_time_delta;
+
+					if (m_mission_at_hospital_countdown <= 0)
+					{
+						m_mission_at_hospital_countdown = 0;
+						MissionFinish();
+					}
+				}
+				else
+				{
+					m_mission_state = HRM::State_Flight_2;
+				}
+			
 			}
 			else if (m_mission_state == HRM::State_Mission_Finished)
 			{
-
+				
 			}
 			else if (m_mission_state == HRM::State_Mission_Cancelled)
 			{
-
+				
 			}
 
 			// End of Slow Computations

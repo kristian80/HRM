@@ -86,6 +86,8 @@ namespace HRM
 	const float crew_weight = 225;
 	const float ems_equippment_weight = 350;
 
+	const int pickup_max_distance = 100;
+
 	const float fse_min_park_brake = 0.5;
 
 	const float coord_invalid = -10000;
@@ -99,8 +101,8 @@ namespace HRM
 		State_Pre_Flight,
 		State_Flight_1,
 		State_At_Patient,
-		State_Patient_Loaded,
 		State_Flight_2,
+		State_At_Hospital,
 		State_Mission_Finished,
 		State_Mission_Cancelled
 	};
@@ -138,25 +140,46 @@ namespace HRM
 	const float flight_time_sling_normal = 300;
 	const float flight_time_sling_hard = 150;
 
-	const float threshold_g_mult_easy = 1.3;
-	const float threshold_g_mult_normal = 1.15;
-	const float threshold_g_mult_hard = 1;
+	//const float threshold_g_mult_easy = 1;
+	//const float threshold_g_mult_normal = 1;
+	//const float threshold_g_mult_hard = 1;
 
-	const float threshold_g_mult_flight1 = 1.2;
+	//const float threshold_g_mult_flight1 = 1.2;
 
 	const float threshold_g_mult_flight2 = 1;
 
-	const float threshold_gf_low = 0;
-	const float threshold_gf_med = 0;
-	const float threshold_gf_high = 0;
+	const float threshold_gf_low = 0.2;
+	const float threshold_gf_med = 0.35;
+	const float threshold_gf_high = 0.5;
 
-	const float threshold_gs_low = 0;
-	const float threshold_gs_med = 0;
-	const float threshold_gs_high = 0;
+	const float threshold_gs_low = 0.15;
+	const float threshold_gs_med = 0.35;
+	const float threshold_gs_high = 0.5;
 
-	const float threshold_gv_low = 0;
-	const float threshold_gv_med = 0;
-	const float threshold_gv_high = 0;
+	const float threshold_gv_pos_low = 1.2;
+	const float threshold_gv_pos_med = 1.5;
+	const float threshold_gv_pos_high = 1.8;
+
+	const float threshold_gv_neg_low = 0;
+	const float threshold_gv_neg_med = 0;
+	const float threshold_gv_neg_high = 0;
+
+	const int points_speed_flight1 = 25;
+	const int points_speed_flight2 = 25;
+	const int points_g_flight2 = 50;
+
+	const float eval_g_total_factor = 1;
+
+	const float eval_g_low_factor = 1;
+	const float eval_g_med_factor = 2;
+	const float eval_g_high_factor = 3;
+
+	const float eval_flight1_nominal_speed = 120;
+	const float eval_flight2_nominal_speed = 120;
+	const float eval_flight2_sling_nominal_speed = 50;
+
+	
+
 
 }
 

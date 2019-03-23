@@ -64,6 +64,7 @@ void HRMImguiWidget::buildInterface()
 	win_height = ImGui::GetWindowHeight();
 
 	ImVec4 color_red = ImColor(255, 0, 0);
+	ImVec4 color_orange = ImColor(255, 125, 0);
 	ImVec4 color_yellow = ImColor(255, 255, 0);
 	ImVec4 color_green = ImColor(0, 255, 0);
 
@@ -294,15 +295,17 @@ void HRMImguiWidget::buildInterface()
 		ImGui::Spacing();
 
 
-		if (pHRM->m_mission_preflight_time < 15) ImGui::PushStyleColor(ImGuiCol_Text, color_red);
-		else if (pHRM->m_mission_preflight_time < 30) ImGui::PushStyleColor(ImGuiCol_Text, color_yellow);
+		if (pHRM->m_mission_preflight_countdown < 15) ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+		else if (pHRM->m_mission_preflight_countdown < 30) ImGui::PushStyleColor(ImGuiCol_Text, color_yellow);
 		else ImGui::PushStyleColor(ImGuiCol_Text, color_green);
 
 		ImGui::Text("Pre-Flight Time Remaining: ");
 		ImGui::SameLine();
-		ImGui::Text(HRM_PlugIn::CreateTimeString(pHRM->m_mission_preflight_time).c_str());
+		ImGui::Text(HRM_PlugIn::CreateTimeString(pHRM->m_mission_preflight_countdown).c_str());
 
 		ImGui::PopStyleColor();
+
+		// Cancel Button
 
 		ImGui::Spacing();
 		ImGui::Separator();
@@ -337,22 +340,382 @@ void HRMImguiWidget::buildInterface()
 	}
 	else if (pHRM->m_mission_state == HRM::State_Flight_1)
 	{
+		ImGui::Text("Mission Status: Flight to Patient");
 
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		ImGui::Text("Mission Objective:");
+		if (pHRM->m_mission_time_failed == false)
+		{
+			ImGui::TextWrapped(pHRM->mp_cm_mission->m_start_text.c_str());  
+			ImGui::Separator();
+			if (pHRM->m_cm_estmimated_wp)
+			{
+				ImGui::TextWrapped("The calling party was in panic and only gave us a rough estimate for the position");
+				ImGui::Separator();
+			}
+
+			ImGui::Spacing();
+			ImGui::Separator();
+			ImGui::Spacing();
+
+		
+			if (pHRM->m_mission_flight1_countdown < 15) ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+			else if (pHRM->m_mission_flight1_countdown < 30) ImGui::PushStyleColor(ImGuiCol_Text, color_yellow);
+			else ImGui::PushStyleColor(ImGuiCol_Text, color_green);
+
+			ImGui::Text("Flight Time Remaining: ");
+			ImGui::SameLine();
+			ImGui::Text(HRM_PlugIn::CreateTimeString(pHRM->m_mission_flight1_countdown).c_str());
+
+			ImGui::PopStyleColor();
+		}
+		else
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+			ImGui::TextWrapped(pHRM->mp_cm_mission->m_failed_arr_text.c_str());
+			ImGui::PopStyleColor();
+
+			ImGui::Separator();
+			if (pHRM->m_cm_estmimated_wp)
+			{
+				ImGui::TextWrapped("The calling party was in panic and only gave us a rough estimate for the position");
+				ImGui::Separator();
+			}
+		}
+
+		// Cancel Button
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		ImGui::Spacing();
+		ImGui::Spacing();
+		ImGui::Spacing();
+		ImGui::Spacing();
+
+		if (pHRM->m_cm_cancelling == false)
+		{
+			if (ImGui::Button("Cancel Mission", ImVec2(410, 20)))
+			{
+				pHRM->m_cm_cancelling = true;
+			}
+		}
+		else
+		{
+			if (ImGui::Button("Are you sure?", ImVec2(200, 20)))
+			{
+				pHRM->MissionCancel();
+				pHRM->m_cm_cancelling = false;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Continue", ImVec2(200, 20)))
+			{
+				pHRM->m_cm_cancelling = false;
+			}
+		}
+
+		// m_mission_time_failed
+		// patient not picked up
 	}
 	else if (pHRM->m_mission_state == HRM::State_At_Patient)
 	{
+		// Cancel Button
 
-	}
-	else if (pHRM->m_mission_state == HRM::State_Patient_Loaded)
-	{
+		ImGui::Text("Mission Status: Patient Pickup");
 
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		ImGui::PushStyleColor(ImGuiCol_Text, color_green);
+		ImGui::TextWrapped("Our medical crew is picking up the patient. Stay put!");
+		ImGui::PopStyleColor();
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		ImGui::Text("Pickup Time Remaining: ");
+		ImGui::SameLine();
+		ImGui::Text(HRM_PlugIn::CreateTimeString(pHRM->m_mission_at_patient_countdown).c_str());
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		ImGui::Spacing();
+		ImGui::Spacing();
+		ImGui::Spacing();
+		ImGui::Spacing();
+
+		if (pHRM->m_cm_cancelling == false)
+		{
+			if (ImGui::Button("Cancel Mission", ImVec2(410, 20)))
+			{
+				pHRM->m_cm_cancelling = true;
+			}
+		}
+		else
+		{
+			if (ImGui::Button("Are you sure?", ImVec2(200, 20)))
+			{
+				pHRM->MissionCancel();
+				pHRM->m_cm_cancelling = false;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Continue", ImVec2(200, 20)))
+			{
+				pHRM->m_cm_cancelling = false;
+			}
+		}
 	}
 	else if (pHRM->m_mission_state == HRM::State_Flight_2)
 	{
+		ImGui::Text("Mission Status: Flight to Hospital");
 
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		ImGui::Text("Mission Objective:");
+		if (pHRM->m_mission_time_failed == false)
+		{
+			ImGui::TextWrapped(pHRM->mp_cm_mission->m_flight2_text.c_str());
+
+			ImGui::Spacing();
+			ImGui::Separator();
+			ImGui::Spacing();
+
+
+			if (pHRM->m_mission_flight2_countdown < 15) ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+			else if (pHRM->m_mission_flight2_countdown < 30) ImGui::PushStyleColor(ImGuiCol_Text, color_yellow);
+			else ImGui::PushStyleColor(ImGuiCol_Text, color_green);
+
+			ImGui::Text("Flight Time Remaining: ");
+			ImGui::SameLine();
+			ImGui::Text(HRM_PlugIn::CreateTimeString(pHRM->m_mission_flight2_countdown).c_str());
+
+			ImGui::PopStyleColor();
+
+			ImGui::Separator();
+
+			ImGui::Text("Patient Comfort Level: ");
+
+			if		(abs(pHRM->m_lf_g_forward) < HRM::threshold_gf_low)		ImGui::PushStyleColor(ImGuiCol_Text, color_green);
+			else if (abs(pHRM->m_lf_g_forward) < HRM::threshold_gf_med)		ImGui::PushStyleColor(ImGuiCol_Text, color_yellow);
+			else if (abs(pHRM->m_lf_g_forward) < HRM::threshold_gf_high)	ImGui::PushStyleColor(ImGuiCol_Text, color_orange);
+			else															ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+			ImGui::Text("Forces Forward/Backward");
+			ImGui::PopStyleColor();
+
+			if		(abs(pHRM->m_lf_g_side) < HRM::threshold_gs_low)		ImGui::PushStyleColor(ImGuiCol_Text, color_green);
+			else if (abs(pHRM->m_lf_g_side) < HRM::threshold_gs_med)		ImGui::PushStyleColor(ImGuiCol_Text, color_yellow);
+			else if (abs(pHRM->m_lf_g_side) < HRM::threshold_gs_high)		ImGui::PushStyleColor(ImGuiCol_Text, color_orange);
+			else															ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+			ImGui::Text("Forces Sideways");
+			ImGui::PopStyleColor();
+
+			if		((pHRM->m_lf_g_normal) < HRM::threshold_gv_pos_low)		ImGui::PushStyleColor(ImGuiCol_Text, color_green);
+			else if ((pHRM->m_lf_g_normal) < HRM::threshold_gv_pos_med)		ImGui::PushStyleColor(ImGuiCol_Text, color_yellow);
+			else if ((pHRM->m_lf_g_normal) < HRM::threshold_gv_pos_high)	ImGui::PushStyleColor(ImGuiCol_Text, color_orange);
+			else															ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+			ImGui::Text("Forces Downwards");
+			ImGui::PopStyleColor();
+
+			if		((pHRM->m_lf_g_normal) > HRM::threshold_gv_neg_low)		ImGui::PushStyleColor(ImGuiCol_Text, color_green);
+			else if ((pHRM->m_lf_g_normal) > HRM::threshold_gv_neg_med)		ImGui::PushStyleColor(ImGuiCol_Text, color_yellow);
+			else if ((pHRM->m_lf_g_normal) > HRM::threshold_gv_neg_high)	ImGui::PushStyleColor(ImGuiCol_Text, color_orange);
+			else															ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+			ImGui::Text("Forces Upwards");
+			ImGui::PopStyleColor();
+
+		}
+		else
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+			ImGui::TextWrapped(pHRM->mp_cm_mission->m_failed_hosp_text.c_str());
+			ImGui::PopStyleColor();
+		}
+
+		// Cancel Button
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		ImGui::Spacing();
+		ImGui::Spacing();
+		ImGui::Spacing();
+		ImGui::Spacing();
+
+		if (pHRM->m_cm_cancelling == false)
+		{
+			if (ImGui::Button("Cancel Mission", ImVec2(410, 20)))
+			{
+				pHRM->m_cm_cancelling = true;
+			}
+		}
+		else
+		{
+			if (ImGui::Button("Are you sure?", ImVec2(200, 20)))
+			{
+				pHRM->MissionCancel();
+				pHRM->m_cm_cancelling = false;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Continue", ImVec2(200, 20)))
+			{
+				pHRM->m_cm_cancelling = false;
+			}
+		}
+	}
+	else if (pHRM->m_mission_state == HRM::State_At_Hospital)
+	{
+
+		ImGui::Text("Mission Status: Unloading Patient");
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		ImGui::PushStyleColor(ImGuiCol_Text, color_green);
+		ImGui::TextWrapped("Our medical crew unloading the patient. Stay put!");
+		ImGui::PopStyleColor();
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		ImGui::Text("Unloading Time Remaining: ");
+		ImGui::SameLine();
+		ImGui::Text(HRM_PlugIn::CreateTimeString(pHRM->m_mission_at_hospital_countdown).c_str());
+
+		// Cancel Button
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		ImGui::Spacing();
+		ImGui::Spacing();
+		ImGui::Spacing();
+		ImGui::Spacing();
+
+		if (pHRM->m_cm_cancelling == false)
+		{
+			if (ImGui::Button("Cancel Mission", ImVec2(410, 20)))
+			{
+				pHRM->m_cm_cancelling = true;
+			}
+		}
+		else
+		{
+			if (ImGui::Button("Are you sure?", ImVec2(200, 20)))
+			{
+				pHRM->MissionCancel();
+				pHRM->m_cm_cancelling = false;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Continue", ImVec2(200, 20)))
+			{
+				pHRM->m_cm_cancelling = false;
+			}
+		}
 	}
 	else if (pHRM->m_mission_state == HRM::State_Mission_Finished)
 	{
+		ImGui::Text("Mission Status: Finished");
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		if (pHRM->m_mission_time_failed == false)
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, color_green);
+			ImGui::TextWrapped(pHRM->mp_cm_mission->m_end_text.c_str());
+			ImGui::PopStyleColor();
+		}
+		else
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+			ImGui::TextWrapped("You did not make it in time.");
+			ImGui::PopStyleColor();
+		}
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+		ImGui::PushItemWidth(150);
+			
+		ImGui::Text("Flight1 Time:");
+		ImGui::SameLine();
+		ImGui::Text(HRM_PlugIn::CreateTimeString(pHRM->m_mission_flight1_time).c_str());
+			
+		ImGui::Text("Flight2 Time:");
+		ImGui::SameLine();
+		ImGui::Text(HRM_PlugIn::CreateTimeString(pHRM->m_mission_flight2_time).c_str());
+
+		ImGui::Text("Flight1 Avg Speed [kt]:");
+		ImGui::SameLine();
+		ImGui::Text(std::to_string(pHRM->m_mission_flight1_avg_speed).c_str());
+
+		ImGui::Text("Flight2 Avg Speed [kt]:");
+		ImGui::SameLine();
+		ImGui::Text(std::to_string(pHRM->m_mission_flight2_avg_speed).c_str());
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		ImGui::Text("Flight1 Points:");
+		ImGui::SameLine();
+		ImGui::Text(std::to_string(pHRM->m_mission_points_flight1).c_str());
+			
+		ImGui::Text("Flight2 Points:");
+		ImGui::SameLine();
+		ImGui::Text(std::to_string(pHRM->m_mission_points_flight2).c_str());
+
+		ImGui::Text("Smoothness Points:");
+		ImGui::SameLine();
+		ImGui::Text(std::to_string(pHRM->m_mission_points_flight1).c_str());
+
+		ImGui::Text("Total Points:");
+		ImGui::SameLine();
+		ImGui::Text(std::to_string(pHRM->m_mission_points_total).c_str());
+
+
+		ImGui::PopItemWidth();
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		if (pHRM->m_cm_cancelling == false)
+		{
+			if (ImGui::Button("End Mission", ImVec2(410, 20)))
+			{
+				pHRM->m_cm_cancelling = true;
+			}
+		}
+		else
+		{
+			if (ImGui::Button("Are you sure?", ImVec2(200, 20)))
+			{
+				pHRM->MissionCancel();
+				pHRM->m_cm_cancelling = false;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Continue", ImVec2(200, 20)))
+			{
+				pHRM->m_cm_cancelling = false;
+			}
+		}
+
 
 	}
 	else if (pHRM->m_mission_state == HRM::State_Mission_Cancelled)

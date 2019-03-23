@@ -12,6 +12,7 @@ public:
 
 	std::string m_start_text = "Nothing";
 	std::string m_pickup_text = "The patient is now on board. You should try to get to the hospital as fast, but also as smoothly as possible";
+	std::string m_flight2_text = "The patient is on board and we are on our way to the hospital. We should go as quickly, but also as smoothly as possible to ensure our patient is alright";
 	std::string m_failed_arr_text = "We came too late";
 	std::string m_failed_hosp_text = "The patient did not make it";
 	std::string m_end_text = "Mission completed";

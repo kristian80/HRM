@@ -53,6 +53,7 @@ void HRM_Mission::SaveMission(boost::property_tree::ptree & pt, int & mission_co
 	pt.put(mission + "type", m_mission_type);
 	pt.put(mission + "start_text", m_start_text);
 	pt.put(mission + "pickup_text", m_pickup_text);
+	pt.put(mission + "flight2_text", m_flight2_text);
 	pt.put(mission + "failed_arr_text", m_failed_arr_text);
 	pt.put(mission + "failed_hosp_text", m_failed_hosp_text);
 	pt.put(mission + "end_text", m_end_text);
@@ -81,6 +82,8 @@ bool HRM_Mission::ReadMission(boost::property_tree::ptree & pt, int & mission_co
 	try { m_start_text = pt.get<std::string>(mission + "start_text"); }
 	catch (...) {}
 	try { m_pickup_text = pt.get<std::string>(mission + "pickup_text"); }
+	catch (...) {}
+	try { m_flight2_text = pt.get<std::string>(mission + "flight2_text"); }
 	catch (...) {}
 	try { m_failed_arr_text = pt.get<std::string>(mission + "failed_arr_text"); }
 	catch (...) {}
