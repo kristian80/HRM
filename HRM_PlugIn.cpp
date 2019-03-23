@@ -10,7 +10,8 @@ HRM_PlugIn::HRM_PlugIn() :
 	m_street_waypoints(),
 	m_urban_waypoints(),
 	m_sar_waypoints(),
-	m_sling_waypoints()
+	m_sling_waypoints(),
+	m_fse_airports()
 
 {
 	
@@ -117,6 +118,8 @@ void HRM_PlugIn::PluginStart()
 	ReadWaypoints(m_urban_waypoints, "urban");
 	ReadWaypoints(m_sar_waypoints, "sar");
 	ReadWaypoints(m_sling_waypoints, "sling");
+
+	ReadFSEAirports();
 
 	m_initialized = true;
 }
@@ -237,7 +240,7 @@ void HRM_PlugIn::MissionCreate()
 	if (m_mission_hospital_lat == HRM::coord_invalid) return;
 	if (m_mission_hospital_long == HRM::coord_invalid) return;
 
-	// Get the random mission type. Bit more complicated since some might not be enabled
+	// Get the random mission type and the corresponding waypoint vector. Bit more complicated since some might not be enabled
 
 	int type_count = 0;
 
@@ -297,12 +300,43 @@ void HRM_PlugIn::MissionCreate()
 		return;
 	}
 
+	std::vector<HRM_Waypoint *> considered_waypoints;
+
+	
+	// Check for all waypoints that are within the set distance 
+
+	if (m_cm_enable_fse == false)
+	{
+		// MIN-MAX Distance 
+		for (auto p_waypoint : *p_waypoint_vector)
+		{
+			double distance = abs(calc_distance_nm(m_mission_scenario_lat, m_mission_scenario_long, p_waypoint->latitude, p_waypoint->longitude));
+
+			if ((distance >= m_cm_min_distance) && (distance <= m_cm_max_distance))
+			{
+				considered_waypoints.push_back(p_waypoint);
+			}
+
+		}
+	}
+	else
+	{
+
+	}
+
+	// When no Waypoint in Range, Set Error and Return
+	if (considered_waypoints.size() == 0)
+	{
+		m_cm_no_waypoint_found = true;
+		return;
+	}
+
 	// Find Random Mission and Waypoint
 
-	int random_waypoint = rand() % p_waypoint_vector->size();
+	int random_waypoint = rand() % considered_waypoints.size();
 	int random_mission = rand() % p_mission_vector->size();
 
-	mp_cm_waypoint = p_waypoint_vector->at(random_waypoint);
+	mp_cm_waypoint = considered_waypoints.at(random_waypoint);
 	mp_cm_mission = p_mission_vector->at(random_mission);
 
 	// Calculate the heading of the waypoint
@@ -343,6 +377,115 @@ void HRM_PlugIn::MissionReset()
 
 void HRM_PlugIn::MissionCancel()
 {
+}
+
+void HRM_PlugIn::ReadFSEAirports()
+{
+	std::string fse_line;
+	std::ifstream fse_file(m_config_path + "icaodata.csv");
+	std::string fse_delimiter = ",";
+	size_t pos = 0;
+
+	try
+	{
+
+		if (fse_file.is_open())
+		{
+			HRMDebugString("icaodata.csv opened successfully");
+
+			while (!fse_file.eof())
+			{
+				getline(fse_file, fse_line);
+
+
+				std::string apt_icao = "";
+				std::string apt_lat = "";
+				std::string apt_long = "";
+				std::string apt_name = "";
+				std::string apt_type = "";
+				std::string apt_size = "";
+				double apt_longitude = 0;
+				double apt_latitude = 0;
+				int pos_long = 0;
+				int pos_lat = 0;
+
+				//ICAO
+				if ((pos = fse_line.find(fse_delimiter)) != std::string::npos)
+				{
+					apt_icao = fse_line.substr(0, pos);
+					fse_line.erase(0, pos + fse_delimiter.length());
+				}
+
+				// Check for header line
+				if ((apt_icao.compare("icao") != 0) && (pos != std::string::npos))
+				{
+					// Get Latitude
+					if ((pos = fse_line.find(fse_delimiter)) != std::string::npos)
+					{
+						apt_lat = fse_line.substr(0, pos);
+						apt_latitude = std::stof(apt_lat);
+						pos_lat = 90 + ((int)apt_latitude);
+						fse_line.erase(0, pos + fse_delimiter.length());
+					}
+
+					// Get Longitude
+					if ((pos = fse_line.find(fse_delimiter)) != std::string::npos)
+					{
+						apt_long = fse_line.substr(0, pos);
+						apt_longitude = std::stof(apt_long);
+						pos_long = 180 + ((int)apt_longitude);
+						fse_line.erase(0, pos + fse_delimiter.length());
+					}
+
+					// Get Type
+					if ((pos = fse_line.find(fse_delimiter)) != std::string::npos)
+					{
+						apt_type = fse_line.substr(0, pos);
+						fse_line.erase(0, pos + fse_delimiter.length());
+					}
+
+					// Get Size
+					if ((pos = fse_line.find(fse_delimiter)) != std::string::npos)
+					{
+						apt_size = fse_line.substr(0, pos);
+						fse_line.erase(0, pos + fse_delimiter.length());
+					}
+
+					// Get Name
+					if ((pos = fse_line.find(fse_delimiter)) != std::string::npos)
+					{
+						apt_name = fse_line.substr(0, pos);
+						fse_line.erase(0, pos + fse_delimiter.length());
+					}
+
+					HRM_Airport *p_airport = new HRM_Airport();
+
+					p_airport->icao = apt_icao;
+					p_airport->name = apt_name;
+					p_airport->longitude = apt_longitude;
+					p_airport->latitude = apt_latitude;
+
+					m_fse_airports.push_back(p_airport);
+				}
+
+
+			}
+
+
+
+
+			HRMDebugString("Finished loading icaodata.csv");
+			fse_file.close();
+		}
+		else
+		{
+			HRMDebugString("Could not find icaodata.csv");
+		}
+	}
+	catch (...)
+	{
+		HRMDebugString("Error reading icaodata.csv");
+	}
 }
 
 void HRM_PlugIn::ReadWaypoints(std::vector<HRM_Waypoint*>& waypoint_vector, std::string file_name)
@@ -564,53 +707,76 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 				// Search for Scenario ICAO
 				else
 				{
-
-					bool scenario_search_finished = false;
-					bool scenario_navaid_found = false;
-
-					XPLMNavRef nav_scenario = XPLM_NAV_NOT_FOUND;
-
-					if (m_cm_scenario_icao.size() > 2)
+					// Find X-Plane Airport 
+					if (m_cm_enable_fse == false)
 					{
-						nav_scenario = XPLMFindFirstNavAidOfType(xplm_Nav_Airport);
+						
+						bool scenario_search_finished = false;
+						bool scenario_navaid_found = false;
 
-						XPLMNavType nav_type_scenario = xplm_Nav_Airport;
+						XPLMNavRef nav_scenario = XPLM_NAV_NOT_FOUND;
 
-
-						for (int index = 0; (scenario_search_finished == false) && (scenario_navaid_found == false); index++)
+						if (m_cm_scenario_icao.size() > 2)
 						{
-							if (index == 0) nav_scenario = XPLMFindFirstNavAidOfType(xplm_Nav_Airport);
-							else nav_scenario = XPLMGetNextNavAid(nav_scenario);
+							nav_scenario = XPLMFindFirstNavAidOfType(xplm_Nav_Airport);
 
-							if (nav_scenario != XPLM_NAV_NOT_FOUND)
+							XPLMNavType nav_type_scenario = xplm_Nav_Airport;
+
+
+							for (int index = 0; (scenario_search_finished == false) && (scenario_navaid_found == false); index++)
 							{
-								char buffer[2048];
-								XPLMGetNavAidInfo(nav_scenario, &nav_type_scenario, &m_mission_scenario_lat, &m_mission_scenario_long, NULL, NULL, NULL, buffer, NULL, NULL);
+								if (index == 0) nav_scenario = XPLMFindFirstNavAidOfType(xplm_Nav_Airport);
+								else nav_scenario = XPLMGetNextNavAid(nav_scenario);
 
-								if (nav_type_scenario != xplm_Nav_Airport)			scenario_search_finished = true;
-								else if (m_cm_scenario_icao.compare(buffer) == 0)	scenario_navaid_found = true;
+								if (nav_scenario != XPLM_NAV_NOT_FOUND)
+								{
+									char buffer[2048];
+									XPLMGetNavAidInfo(nav_scenario, &nav_type_scenario, &m_mission_scenario_lat, &m_mission_scenario_long, NULL, NULL, NULL, buffer, NULL, NULL);
 
-							}
-							else
-							{
-								scenario_search_finished = true;
+									if (nav_type_scenario != xplm_Nav_Airport)			scenario_search_finished = true;
+									else if (m_cm_scenario_icao.compare(buffer) == 0)	scenario_navaid_found = true;
+
+								}
+								else
+								{
+									scenario_search_finished = true;
+								}
 							}
 						}
-					}
 
-					if ((nav_scenario != XPLM_NAV_NOT_FOUND) && (scenario_navaid_found == true))
-					{
-						char buffer[2048];
-						XPLMGetNavAidInfo(nav_scenario, NULL, &m_mission_scenario_lat, &m_mission_scenario_long, NULL, NULL, NULL, NULL, buffer, NULL);
-						m_mission_scenario_icao_name = buffer;
-						m_mission_scenario_icao_found = true;
+						if ((nav_scenario != XPLM_NAV_NOT_FOUND) && (scenario_navaid_found == true))
+						{
+							char buffer[2048];
+							XPLMGetNavAidInfo(nav_scenario, NULL, &m_mission_scenario_lat, &m_mission_scenario_long, NULL, NULL, NULL, NULL, buffer, NULL);
+							m_mission_scenario_icao_name = buffer;
+							m_mission_scenario_icao_found = true;
+						}
+						else
+						{
+							m_mission_scenario_icao_found = false;
+							m_mission_scenario_icao_name = "";
+							m_mission_scenario_lat = HRM::coord_invalid;
+							m_mission_scenario_long = HRM::coord_invalid;
+						}
 					}
+					// Find FSEconomy Airport
 					else
 					{
 						m_mission_scenario_icao_found = false;
 						m_mission_scenario_icao_name = "";
 						m_mission_scenario_lat = HRM::coord_invalid;
 						m_mission_scenario_long = HRM::coord_invalid;
+
+						for (auto p_airport : m_fse_airports)
+						{
+							if (m_cm_scenario_icao.compare(p_airport->icao) == 0)
+							{
+								m_mission_scenario_icao_found = true;
+								m_mission_scenario_icao_name = p_airport->name;
+								m_mission_scenario_lat = p_airport->latitude;
+								m_mission_scenario_long = p_airport->longitude;
+							}
+						}
 					}
 				}
 

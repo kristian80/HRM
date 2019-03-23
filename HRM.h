@@ -70,11 +70,11 @@ struct HRM_Waypoint
 
 struct HRM_Airport
 {
+	std::string icao;
+	std::string name;
 	double latitude;
 	double longitude;
-	double heading;
-	double lat_heading;
-	double long_heading;
+	
 };
 
 namespace HRM

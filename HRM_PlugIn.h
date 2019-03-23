@@ -21,6 +21,8 @@ public:
 
 	std::shared_ptr<HRMImguiWidget> imguiPtr;
 
+	std::vector<HRM_Airport *> m_fse_airports;
+
 	std::vector<HRM_Mission *> m_street_missions;
 	std::vector<HRM_Mission *> m_urban_missions;
 	std::vector<HRM_Mission *> m_sar_missions;
@@ -224,7 +226,7 @@ public:
 	void MissionReset();
 	void MissionCancel();
 
-	
+	void ReadFSEAirports();
 	void ReadWaypoints(std::vector<HRM_Waypoint *> &waypoint_vector, std::string file_name);
 
 	void SaveMissions();

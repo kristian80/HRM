@@ -94,31 +94,37 @@ void HRMImguiWidget::buildInterface()
 		if (ImGui::RadioButton("Use ICAO", pHRM->m_cm_use_position == HRM::Scenario_ICAO))
 			pHRM->m_cm_use_position = HRM::Scenario_ICAO;
 
-		
-
-		//ImGui::SameLine();
-		ImGui::PushItemWidth(100);
-		ImGui::InputText("Scenario ICAO", &(pHRM->m_cm_scenario_icao));
-		ImGui::PopItemWidth();
-
 		if (pHRM->m_cm_use_position == HRM::Scenario_ICAO)
 		{
-			if (pHRM->m_mission_scenario_icao_found == true)
+
+			//ImGui::SameLine();
+			ImGui::PushItemWidth(100);
+			ImGui::InputText("Scenario ICAO", &(pHRM->m_cm_scenario_icao));
+			ImGui::PopItemWidth();
+
+			if (pHRM->m_cm_use_position == HRM::Scenario_ICAO)
 			{
-				ImGui::PushStyleColor(ImGuiCol_Text, color_green);
-				ImGui::Text(pHRM->m_mission_scenario_icao_name.c_str());
-				ImGui::PopStyleColor();
-			}
-			else
-			{
-				ImGui::PushStyleColor(ImGuiCol_Text, color_red);
-				ImGui::Text("ICAO NOT Found");
-				ImGui::PopStyleColor();
+				if (pHRM->m_mission_scenario_icao_found == true)
+				{
+					ImGui::PushStyleColor(ImGuiCol_Text, color_green);
+					ImGui::Text(pHRM->m_mission_scenario_icao_name.c_str());
+					ImGui::PopStyleColor();
+				}
+				else
+				{
+					ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+					ImGui::Text("ICAO NOT Found");
+					ImGui::PopStyleColor();
+				}
+
 			}
 
+			ImGui::Checkbox("FSEconomy", &(pHRM->m_cm_enable_fse));
 		}
-
-		ImGui::Checkbox("FSEconomy", &(pHRM->m_cm_enable_fse));
+		else
+		{
+			pHRM->m_cm_enable_fse = false;
+		}
 
 		if (pHRM->m_cm_enable_fse == false)
 		{
@@ -165,6 +171,20 @@ void HRMImguiWidget::buildInterface()
 		if (ImGui::Button("Create Mission", ImVec2(410, 20)))
 		{
 			pHRM->MissionCreate();
+		}
+
+		if (pHRM->m_cm_creation_failed)
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+			ImGui::Text("Could Not Create Mission");
+			ImGui::PopStyleColor();
+		}
+
+		if (pHRM->m_cm_no_waypoint_found)
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+			ImGui::Text("No Waypoint Found");
+			ImGui::PopStyleColor();
 		}
 		//ImGui::PopItemWidth();
 		
