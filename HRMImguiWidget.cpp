@@ -682,7 +682,7 @@ void HRMImguiWidget::buildInterface()
 
 		ImGui::Text("Smoothness Points:");
 		ImGui::SameLine();
-		ImGui::Text(std::to_string(pHRM->m_mission_points_flight1).c_str());
+		ImGui::Text(std::to_string(pHRM->m_mission_points_g_force).c_str());
 
 		ImGui::Text("Total Points:");
 		ImGui::SameLine();

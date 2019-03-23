@@ -550,10 +550,10 @@ void HRM_PlugIn::MissionFinish()
 	// If the Mission Time failed, you do not get any points
 	if (m_mission_time_failed == false)
 	{
-		m_mission_points_flight1 = min(HRM::eval_flight1_nominal_speed / ((float) m_mission_flight1_avg_speed), 1.f) * ((float) HRM::points_speed_flight1);
-		m_mission_points_flight2 = min(HRM::eval_flight2_nominal_speed / ((float)m_mission_flight2_avg_speed), 1.f) * ((float)HRM::points_speed_flight2);
+		m_mission_points_flight1 = min(((float) m_mission_flight1_avg_speed) / HRM::eval_flight1_nominal_speed, 1.f) * ((float) HRM::points_speed_flight1);
+		m_mission_points_flight2 = min(((float)m_mission_flight2_avg_speed) / HRM::eval_flight2_nominal_speed, 1.f) * ((float)HRM::points_speed_flight2);
 
-		m_mission_points_g_force = ((float)HRM::points_g_flight2) / (1 + g_force_seconds);
+		m_mission_points_g_force = ((float)HRM::points_g_flight2) / (1.f + g_force_seconds);
 
 		m_mission_points_total = m_mission_points_flight1 + m_mission_points_flight2 + m_mission_points_g_force;
 
@@ -998,6 +998,25 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 
 		// Fast Computations
 
+		if ((m_mission_state == HRM::State_Flight_2))
+		{
+			if		(abs(pHRM->m_lf_g_forward) > HRM::threshold_gf_high)		m_mission_gf_high += elapsedMe * m_li_sim_ground_speed;
+			else if (abs(pHRM->m_lf_g_forward) > HRM::threshold_gf_med)			m_mission_gf_med += elapsedMe * m_li_sim_ground_speed;
+			else if (abs(pHRM->m_lf_g_forward) > HRM::threshold_gf_low)			m_mission_gf_low += elapsedMe * m_li_sim_ground_speed;
+
+			if		(abs(pHRM->m_lf_g_side) > HRM::threshold_gs_high)			m_mission_gs_high += elapsedMe * m_li_sim_ground_speed;
+			else if (abs(pHRM->m_lf_g_side) > HRM::threshold_gs_med)			m_mission_gs_med += elapsedMe * m_li_sim_ground_speed;
+			else if (abs(pHRM->m_lf_g_side) > HRM::threshold_gs_low)			m_mission_gs_low += elapsedMe * m_li_sim_ground_speed;
+
+			if		(abs(pHRM->m_lf_g_normal) > HRM::threshold_gv_pos_high)		m_mission_gv_pos_high += elapsedMe * m_li_sim_ground_speed;
+			else if (abs(pHRM->m_lf_g_normal) > HRM::threshold_gv_pos_med)		m_mission_gv_pos_med += elapsedMe * m_li_sim_ground_speed;
+			else if (abs(pHRM->m_lf_g_normal) > HRM::threshold_gv_pos_low)		m_mission_gv_pos_low += elapsedMe * m_li_sim_ground_speed;
+
+			if		(abs(pHRM->m_lf_g_normal) < HRM::threshold_gv_neg_high)		m_mission_gv_neg_high += elapsedMe * m_li_sim_ground_speed;
+			else if (abs(pHRM->m_lf_g_normal) < HRM::threshold_gv_neg_med)		m_mission_gv_neg_med += elapsedMe * m_li_sim_ground_speed;
+			else if (abs(pHRM->m_lf_g_normal) < HRM::threshold_gv_neg_low)		m_mission_gv_neg_low += elapsedMe * m_li_sim_ground_speed;
+		}
+
 		// End of Fast Computations
 
 		if (m_time_delta >= m_position_calc_rate)
@@ -1221,16 +1240,16 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 				else
 				{
 					// If within 100m and collective down
-					if ((calc_distance_m(m_ld_latitude, m_ld_longitude, m_mission_hospital_lat, m_mission_hospital_long) < HRM::pickup_max_distance) && (m_lfa_prop_ratio[0] < m_cm_collective_min))
+					if ((calc_distance_m(m_ld_latitude, m_ld_longitude, m_mission_hospital_lat, m_mission_hospital_long) < HRM::hospital_max_distance) && (m_lfa_prop_ratio[0] < m_cm_collective_min))
 					{
-						m_mission_at_patient_countdown = m_patient_countdown_value;
+						m_mission_at_hospital_countdown = m_hospital_countdown_value;
 						m_mission_state = HRM::State_At_Hospital;
 					}
 				}
 			}
 			else if (m_mission_state == HRM::State_At_Hospital)
 			{
-				if (m_li_on_ground == 0)
+				if (m_li_on_ground == 1)
 				{
 					m_mission_at_hospital_countdown -= m_time_delta;
 

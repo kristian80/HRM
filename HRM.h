@@ -87,6 +87,7 @@ namespace HRM
 	const float ems_equippment_weight = 350;
 
 	const int pickup_max_distance = 100;
+	const int hospital_max_distance = 500;
 
 	const float fse_min_park_brake = 0.5;
 

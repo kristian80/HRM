@@ -88,7 +88,7 @@ public:
 	float m_patient_countdown_value = 30;
 	float m_patient_fse_finish_value = 20;
 	float m_patient_fse_restart_value = 10;
-	float m_hospital_countdown_value = 7;
+	float m_hospital_countdown_value = 10;
 
 	
 
