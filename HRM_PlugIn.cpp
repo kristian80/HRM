@@ -321,6 +321,58 @@ void HRM_PlugIn::MissionCreate()
 	}
 	else
 	{
+		// First reduce the numbers of airports to compute
+		std::vector<HRM_Airport *> reduced_airports;
+
+		for (auto p_airport : m_fse_airports)
+		{
+			double distance = abs(calc_distance_nm(m_mission_scenario_lat, m_mission_scenario_long, p_airport->latitude, p_airport->longitude));
+
+			if (distance <= m_cm_fse_airport_radius)
+			{
+				reduced_airports.push_back(p_airport);
+			}
+		}
+
+		// Reduce number of waypoints to compute
+		std::vector<HRM_Waypoint *> reduced_waypoints;
+		// MIN-MAX Distance 
+		for (auto p_waypoint : *p_waypoint_vector)
+		{
+			double distance = abs(calc_distance_nm(m_mission_scenario_lat, m_mission_scenario_long, p_waypoint->latitude, p_waypoint->longitude));
+
+			if (distance <= m_cm_fse_airport_radius)
+			{
+				reduced_waypoints.push_back(p_waypoint);
+			}
+
+		}
+
+		// Now the number of computation = reduced_waypoints.size() * considered_airports.size(). Still enough
+		for (auto p_waypoint : reduced_waypoints)
+		{
+			HRM_Airport* p_closest_airport = NULL;
+			double closest_distance = 10000;
+
+			for (auto p_airport : reduced_airports)
+			{
+				double distance = abs(calc_distance_nm(p_airport->latitude, p_airport->longitude, p_waypoint->latitude, p_waypoint->longitude));
+
+				if (distance < closest_distance)
+				{
+					p_closest_airport = p_airport;
+					closest_distance = distance;
+				}
+			}
+
+			// If the closest airport is the selected airport, consider this waypoint for mission creation
+			if ((p_closest_airport != NULL) && (m_cm_scenario_icao.compare(p_closest_airport->icao) == 0))
+			{
+				considered_waypoints.push_back(p_waypoint);
+			}
+		}
+
+
 
 	}
 

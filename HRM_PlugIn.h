@@ -71,6 +71,7 @@ public:
 	bool m_cm_use_airport = false;
 	std::string m_cm_scenario_icao = "";
 	bool m_cm_enable_fse = false;
+	double m_cm_fse_airport_radius = 200;
 
 	int m_cm_min_distance = 0;
 	int m_cm_max_distance = 15;
