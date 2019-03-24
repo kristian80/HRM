@@ -89,7 +89,9 @@ void HRM_Object::SetPosition(double zero_latitude, double zero_longitude, double
 
 	XPLMLocalToWorld(info.locationX, info.locationY, info.locationZ, &local_lat, &local_long, &local_alt);
 	
-	XPLMWorldToLocal(local_lat, local_long, local_alt + m_elevation, &zero_x, &zero_y, &zero_z); // incorporate elevation
+	//XPLMWorldToLocal(local_lat, local_long, local_alt + m_elevation, &zero_x, &zero_y, &zero_z); // incorporate elevation
+
+	XPLMWorldToLocal(m_latitude, m_longitude, local_alt + m_elevation, &zero_x, &zero_y, &zero_z); // incorporate elevation
 
 
 
