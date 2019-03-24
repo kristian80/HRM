@@ -73,6 +73,7 @@ public:
 	bool m_cm_use_airport = false;
 	std::string m_cm_scenario_icao = "";
 	bool m_cm_enable_fse = false;
+	bool m_cm_autoconnect_fse = false;
 	double m_cm_fse_airport_radius = 200;
 
 	int m_cm_min_distance = 0;
@@ -164,11 +165,26 @@ public:
 	int m_mission_points_flight2 = 0;
 	int m_mission_points_g_force = 0;
 
+	//////////////////////////////////////////////////////////////////////////////////////////////////
+	// FSEconomy
 
+	XPLMDataRef m_fse_dr_is_connected = NULL;
+	XPLMDataRef m_fse_dr_is_flying = NULL;
+	XPLMDataRef m_fse_dr_can_end_flight = NULL;
+
+	int m_fse_li_is_connected = 0;
+	int m_fse_li_is_flying = 0;
+	int m_fse_li_can_end_flight = 0;
+
+	XPLMCommandRef m_fse_command_login = NULL;
+	XPLMCommandRef m_fse_command_start = NULL;
+	XPLMCommandRef m_fse_command_end = NULL;
 
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// DATAREFS
+
+	
 
 	XPLMDataRef m_d_latitude;
 	XPLMDataRef m_d_longitude;
@@ -263,6 +279,15 @@ public:
 	void MissionFinish();
 	void MissionReset();
 	void MissionCancel();
+
+	void FSERegister();
+	void FSELogin();
+	bool FSEIsConnected();
+	void FSEStartFlight();
+	bool FSEIsFlying();
+	bool FSECanFinish();
+	void FSEFinishFlight();
+
 
 	void CreateFlightPlan();
 

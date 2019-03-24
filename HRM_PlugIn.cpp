@@ -254,6 +254,11 @@ void HRM_PlugIn::MissionCreate()
 	m_cm_creation_failed = true;
 	m_cm_no_waypoint_found = false;
 
+	if ((m_cm_enable_fse == true) && (m_cm_autoconnect_fse == true))
+	{
+		if (FSEIsConnected() == false) FSELogin();
+	}
+
 	mp_cm_waypoint = NULL;
 	mp_cm_mission = NULL;
 
@@ -449,6 +454,11 @@ void HRM_PlugIn::MissionStart()
 		return;
 	}
 
+	if ((m_cm_enable_fse == true) && (m_cm_autoconnect_fse == true))
+	{
+		FSEStartFlight();
+	}
+
 	if ((m_li_battery_on == 0) && (m_lia_engines_running[0] == 0) && (m_lia_engines_running[1] == 0))
 	{
 		if (m_difficutly == HRM::Hard) m_mission_preflight_countdown = HRM::preflight_time_hard;
@@ -622,6 +632,60 @@ void HRM_PlugIn::MissionCancel()
 {
 	MissionReset();
 	pHRM->m_mission_state = HRM::State_Create_Mission;
+}
+
+void HRM_PlugIn::FSERegister()
+{
+	m_fse_dr_is_connected = XPLMFindDataRef("fse/status/connected");
+	m_fse_dr_is_flying = XPLMFindDataRef("fse/status/flying");
+	m_fse_dr_can_end_flight = XPLMFindDataRef("fse/status/canendflight");
+
+	m_fse_command_login = XPLMFindCommand("fse/server/connect");
+	m_fse_command_start = XPLMFindCommand("fse/flight/start");
+	m_fse_command_end = XPLMFindCommand("fse/flight/finish");
+
+}
+
+void HRM_PlugIn::FSELogin()
+{
+	XPLMCommandOnce(m_fse_command_login);
+}
+
+bool HRM_PlugIn::FSEIsConnected()
+{
+	if (m_fse_dr_is_connected != NULL)
+	{
+		if (m_fse_li_is_connected > 0) return true;
+	}
+	return false;
+}
+
+void HRM_PlugIn::FSEStartFlight()
+{
+	XPLMCommandOnce(m_fse_command_start);
+}
+
+bool HRM_PlugIn::FSEIsFlying()
+{
+	if (m_fse_dr_is_flying != NULL)
+	{
+		if (m_fse_li_is_flying > 0) return true;
+	}
+	return false;
+}
+
+bool HRM_PlugIn::FSECanFinish()
+{
+	if (m_fse_dr_can_end_flight != NULL)
+	{
+		if (m_fse_li_can_end_flight > 0) return true;
+	}
+	return false;
+}
+
+void HRM_PlugIn::FSEFinishFlight()
+{
+	XPLMCommandOnce(m_fse_command_end);
 }
 
 void HRM_PlugIn::CreateFlightPlan()
@@ -955,7 +1019,13 @@ void HRM_PlugIn::ReadDataSlow()
 	m_li_paused = XPLMGetDatai(m_i_paused);
 	m_li_replay = XPLMGetDatai(m_i_replay);
 
-	m_li_fse_flying = XPLMGetDatai(m_i_fse_flying);
+	m_li_paused = XPLMGetDatai(m_i_paused);
+
+	if (m_fse_dr_is_connected != NULL)		m_fse_li_is_connected	= XPLMGetDatai(m_fse_dr_is_connected);
+	if (m_fse_dr_is_flying != NULL)			m_fse_li_is_flying		= XPLMGetDatai(m_fse_dr_is_flying);
+	if (m_fse_dr_can_end_flight != NULL)	m_fse_li_can_end_flight = XPLMGetDatai(m_fse_dr_can_end_flight);
+
+	//m_li_fse_flying = XPLMGetDatai(m_i_fse_flying);
 
 	m_lf_weight_max = XPLMGetDataf(m_f_weight_max);
 	m_lf_payload = XPLMGetDataf(m_f_payload);
@@ -1022,6 +1092,10 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 
 		if (m_time_delta >= m_position_calc_rate)
 		{
+			// If not done yet, check for FSEconomy
+
+			if ((m_cm_enable_fse == true) && (m_fse_dr_is_connected == NULL)) FSERegister();
+
 			ReadDataSlow();
 
 			// Slow Computations
@@ -1197,11 +1271,24 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 				}
 				else
 				{
-					// If within 100m and collective down
-					if ((calc_distance_m(m_ld_latitude, m_ld_longitude, mp_cm_waypoint->latitude, mp_cm_waypoint->longitude) < HRM::pickup_max_distance) && (m_lfa_prop_ratio[0] < m_cm_collective_min))
+					// If within 100m and collective down or fse can finish
+					if (calc_distance_m(m_ld_latitude, m_ld_longitude, mp_cm_waypoint->latitude, mp_cm_waypoint->longitude) < HRM::pickup_max_distance)
 					{
-						m_mission_at_patient_countdown = m_patient_countdown_value;
-						m_mission_state = HRM::State_At_Patient;
+						if ((m_cm_enable_fse == true) && (m_cm_autoconnect_fse == true) && (FSECanFinish() == true)) 
+						{
+							FSEFinishFlight();
+
+							m_mission_at_patient_countdown = m_patient_countdown_value;
+							m_mission_state = HRM::State_At_Patient;
+						}
+						else if (m_lfa_prop_ratio[0] < m_cm_collective_min)
+						{
+							m_mission_at_patient_countdown = m_patient_countdown_value;
+							m_mission_state = HRM::State_At_Patient;
+						}
+
+
+						
 					}
 				}
 			}
@@ -1215,6 +1302,11 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 					m_mission_at_patient_countdown -= m_time_delta;
 					if (m_mission_at_patient_countdown <= 0)
 					{
+						if ((m_cm_enable_fse == true) && (m_cm_autoconnect_fse == true))
+						{
+							FSEStartFlight();
+						}
+
 						if (mp_cm_mission != NULL) mp_cm_mission->RemovePatients();
 						MissionStartFlight2();
 					}
@@ -1242,10 +1334,21 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 				else
 				{
 					// If within 100m and collective down
-					if ((calc_distance_m(m_ld_latitude, m_ld_longitude, m_mission_hospital_lat, m_mission_hospital_long) < HRM::hospital_max_distance) && (m_lfa_prop_ratio[0] < m_cm_collective_min))
+					if (calc_distance_m(m_ld_latitude, m_ld_longitude, m_mission_hospital_lat, m_mission_hospital_long) < HRM::hospital_max_distance)
 					{
-						m_mission_at_hospital_countdown = m_hospital_countdown_value;
-						m_mission_state = HRM::State_At_Hospital;
+						if ((m_cm_enable_fse == true) && (m_cm_autoconnect_fse == true) && (FSECanFinish() == true))
+						{
+							FSEFinishFlight();
+
+							m_mission_at_hospital_countdown = m_hospital_countdown_value;
+							m_mission_state = HRM::State_At_Hospital;
+						}
+						else if (m_lfa_prop_ratio[0] < m_cm_collective_min)
+						{
+
+							m_mission_at_hospital_countdown = m_hospital_countdown_value;
+							m_mission_state = HRM::State_At_Hospital;
+						}
 					}
 				}
 			}

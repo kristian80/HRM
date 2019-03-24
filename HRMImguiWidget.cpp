@@ -121,6 +121,7 @@ void HRMImguiWidget::buildInterface()
 			}
 
 			ImGui::Checkbox("FSEconomy", &(pHRM->m_cm_enable_fse));
+			ImGui::Checkbox("FSE Autoconnect", &(pHRM->m_cm_autoconnect_fse));
 		}
 		else
 		{
@@ -722,6 +723,57 @@ void HRMImguiWidget::buildInterface()
 	{
 
 	}
+
+	//FSEconomy Status
+	if (pHRM->m_cm_enable_fse == true)
+	{
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		if (pHRM->FSEIsConnected())
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, color_green);
+			ImGui::TextWrapped("FSE Connected");
+			ImGui::PopStyleColor();
+		}
+		else
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+			ImGui::TextWrapped("FSE NOT Connected");
+			ImGui::PopStyleColor();
+		}
+
+		if (pHRM->FSEIsFlying())
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, color_green);
+			ImGui::TextWrapped("FSE Flying");
+			ImGui::PopStyleColor();
+		}
+		else
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+			ImGui::TextWrapped("FSE NOT Flying");
+			ImGui::PopStyleColor();
+		}
+
+		if ((pHRM->m_li_on_ground == 1) &&(pHRM->FSECanFinish()))
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, color_green);
+			ImGui::TextWrapped("FSE Can Finish Flight");
+			ImGui::PopStyleColor();
+		}
+		else if (pHRM->m_li_on_ground == 1)
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+			ImGui::TextWrapped("FSE Cannot Finish Flight");
+			ImGui::PopStyleColor();
+		}
+	}
+
+	
+
+	
 
 	
 
