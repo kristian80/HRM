@@ -484,7 +484,7 @@ void HRMImguiWidget::buildInterface()
 		ImGui::Text("Mission Objective:");
 		if (pHRM->m_mission_time_failed == false)
 		{
-			ImGui::TextWrapped(pHRM->mp_cm_mission->m_flight2_text.c_str());
+			ImGui::TextWrapped(pHRM->mp_cm_mission->m_pickup_text.c_str());
 
 			ImGui::Spacing();
 			ImGui::Separator();

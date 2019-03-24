@@ -496,6 +496,7 @@ void HRM_PlugIn::MissionStartFlight1()
 
 void HRM_PlugIn::MissionStartFlight2()
 {
+
 	double distance = abs(calc_distance_nm(m_ld_latitude, m_ld_longitude, m_mission_hospital_lat, m_mission_hospital_long));
 
 	m_mission_flight2_distance = distance;
@@ -1214,6 +1215,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 					m_mission_at_patient_countdown -= m_time_delta;
 					if (m_mission_at_patient_countdown <= 0)
 					{
+						if (mp_cm_mission != NULL) mp_cm_mission->RemovePatients();
 						MissionStartFlight2();
 					}
 				}

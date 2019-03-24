@@ -37,6 +37,7 @@ public:
 	void SetObjectPosition();
 
 	void RemoveMission(void);
+	void RemovePatients(void);
 	void DrawMission(void);
 
 	void SaveMission(boost::property_tree::ptree &pt, int &mission_counter);

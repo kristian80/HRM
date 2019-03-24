@@ -33,6 +33,14 @@ void HRM_Mission::RemoveMission(void)
 	}
 }
 
+void HRM_Mission::RemovePatients(void)
+{
+	for (auto p_obj : m_object_vector)
+	{
+		if (p_obj->m_is_patient == true) p_obj->DestroyInstance();
+	}
+}
+
 void HRM_Mission::DrawMission(void)
 {
 	for (auto p_obj : m_object_vector)
