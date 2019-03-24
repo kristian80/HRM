@@ -1274,14 +1274,14 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 					// If within 100m and collective down or fse can finish
 					if (calc_distance_m(m_ld_latitude, m_ld_longitude, mp_cm_waypoint->latitude, mp_cm_waypoint->longitude) < HRM::pickup_max_distance)
 					{
-						if ((m_cm_enable_fse == true) && (m_cm_autoconnect_fse == true) && (FSECanFinish() == true)) 
+						if ((m_cm_enable_fse == true) && (m_cm_autoconnect_fse == true) && ((FSECanFinish() == true) || (FSEIsFlying() == false))) 
 						{
 							FSEFinishFlight();
 
 							m_mission_at_patient_countdown = m_patient_countdown_value;
 							m_mission_state = HRM::State_At_Patient;
 						}
-						else if (m_lfa_prop_ratio[0] < m_cm_collective_min)
+						else if ((m_lfa_prop_ratio[0] < m_cm_collective_min) && (m_cm_autoconnect_fse == false))
 						{
 							m_mission_at_patient_countdown = m_patient_countdown_value;
 							m_mission_state = HRM::State_At_Patient;
@@ -1336,14 +1336,14 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 					// If within 100m and collective down
 					if (calc_distance_m(m_ld_latitude, m_ld_longitude, m_mission_hospital_lat, m_mission_hospital_long) < HRM::hospital_max_distance)
 					{
-						if ((m_cm_enable_fse == true) && (m_cm_autoconnect_fse == true) && (FSECanFinish() == true))
+						if ((m_cm_enable_fse == true) && (m_cm_autoconnect_fse == true) && ((FSECanFinish() == true) || (FSEIsFlying() == false)))
 						{
 							FSEFinishFlight();
 
 							m_mission_at_hospital_countdown = m_hospital_countdown_value;
 							m_mission_state = HRM::State_At_Hospital;
 						}
-						else if (m_lfa_prop_ratio[0] < m_cm_collective_min)
+						else if ((m_lfa_prop_ratio[0] < m_cm_collective_min) && (m_cm_autoconnect_fse == false))
 						{
 
 							m_mission_at_hospital_countdown = m_hospital_countdown_value;
