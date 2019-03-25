@@ -81,7 +81,7 @@ void HRM_Object::SetPosition(double zero_latitude, double zero_longitude, double
 	info.structSize = sizeof(info);
 
 	XPLMProbeResult result = XPLMProbeTerrainXYZ(m_probe, zero_x, zero_y, zero_z, &info);
-	result = XPLMProbeTerrainXYZ(m_probe, info.locationX, info.locationY, info.locationZ, &info);  // Twice for improved precision
+	//result = XPLMProbeTerrainXYZ(m_probe, zero_x, zero_y, info.locationZ, &info);  // Twice for improved precision
 	
 	double local_long;
 	double local_lat;
