@@ -63,6 +63,8 @@ void HRM_PlugIn::PluginStart()
 
 	srand(time(NULL));
 
+	ReadConfig();
+
 	
 
 	XPLMRegisterFlightLoopCallback(WrapFlightLoopCallback, 0.1, 0);
@@ -134,6 +136,8 @@ void HRM_PlugIn::PluginStart()
 	m_f_pitch = XPLMFindDataRef("sim/flightmodel/position/theta");
 	m_f_roll = XPLMFindDataRef("sim/flightmodel/position/phi");
 
+	m_i_jett_is_slung = XPLMFindDataRef("sim/aircraft/overflow/acf_jett_is_slung");
+
 	ReadMissions();
 
 	ReadWaypoints(m_street_waypoints, "street");
@@ -142,6 +146,7 @@ void HRM_PlugIn::PluginStart()
 	ReadWaypoints(m_sling_waypoints, "sling");
 
 	ReadFSEAirports();
+	ReadCustomICAOs();
 
 	m_initialized = true;
 }
@@ -154,14 +159,14 @@ void HRM_PlugIn::PluginStop()
 	
 	if (m_initialized == false) return;
 
+	
+
 	XPLMUnregisterFlightLoopCallback(WrapFlightLoopCallback, 0);
 
 	XPLMDestroyMenu(m_PluginMenuID);
 
+	SaveConfig();
 
-	//m_ivyConfig->WriteConfig();
-
-	//if (m_ivyConfig) delete m_ivyConfig;
 
 	
 
@@ -500,6 +505,10 @@ void HRM_PlugIn::MissionStartFlight1()
 									(distance * HRM::flight_time_per_nm_easy) +
 									(m_cm_estmimated_wp ? HRM::flight_time_search_easy : 0) +
 									(mp_cm_mission->m_mission_type == HRM::type_sling ? HRM::flight_time_sling_easy : 0);
+	if (m_adjust_payload==true)
+	{
+		XPLMSetDataf(m_f_payload, m_crew_weight + m_ems_equippment_weight);
+	}
 
 	pHRM->m_mission_state = HRM::State_Flight_1;
 }
@@ -525,6 +534,11 @@ void HRM_PlugIn::MissionStartFlight2()
 										(distance * HRM::flight_time_per_nm_easy) +
 										(m_cm_estmimated_wp ? HRM::flight_time_search_easy : 0) +
 										(mp_cm_mission->m_mission_type == HRM::type_sling ? HRM::flight_time_sling_easy : 0);
+
+	if (m_adjust_payload == true)
+	{
+		XPLMSetDataf(m_f_payload, m_crew_weight + m_ems_equippment_weight + m_patient_weight);
+	}
 
 	pHRM->m_mission_state = HRM::State_Flight_2;
 }
@@ -564,7 +578,7 @@ void HRM_PlugIn::MissionFinish()
 		m_mission_points_flight1 = min(((float) m_mission_flight1_avg_speed) / HRM::eval_flight1_nominal_speed, 1.f) * ((float) HRM::points_speed_flight1);
 		m_mission_points_flight2 = min(((float)m_mission_flight2_avg_speed) / HRM::eval_flight2_nominal_speed, 1.f) * ((float)HRM::points_speed_flight2);
 
-		m_mission_points_g_force = ((float)HRM::points_g_flight2) / (1.f + g_force_seconds);
+		m_mission_points_g_force = ((float)HRM::points_g_flight2) / (1.f + (g_force_seconds/ HRM::eval_g_total_factor));
 
 		m_mission_points_total = m_mission_points_flight1 + m_mission_points_flight2 + m_mission_points_g_force;
 
@@ -735,6 +749,127 @@ void HRM_PlugIn::CreateFlightPlan()
 		HRMDebugString("Could not write FMS file");
 	}
 
+}
+
+void HRM_PlugIn::ReadCustomICAOs()
+{
+	try
+	{
+		std::ifstream waypoint_file(m_config_path + "custom_hospitals.fms");
+		std::string line_string;
+
+		bool odd_waypoint = true;
+		HRM_Airport *p_airport = new HRM_Airport();
+
+		double lat_correct = 0;
+		double long_correct = 0;
+
+
+
+		while (std::getline(waypoint_file, line_string))
+		{
+			std::stringstream line_stream(line_string);
+			std::string airport_icao = "";
+			std::string dummy_string;
+			double dummy_double;
+
+			int line_code = 0;
+			line_stream >> line_code;
+
+			if ((line_stream) && (line_code == 28))
+			{
+				line_stream >> airport_icao; // Waypoint Name
+				line_stream >> dummy_string; // Waypoint Special
+				line_stream >> dummy_double; // Waypoint Altitude
+
+				double way_lat = HRM::coord_invalid;
+				double way_long = HRM::coord_invalid;
+
+				line_stream >> way_lat;
+				line_stream >> way_long;
+
+				if ((way_lat != HRM::coord_invalid) && (way_lat != HRM::coord_invalid))
+				{
+					p_airport->icao = airport_icao;
+					p_airport->latitude = way_lat;
+					p_airport->longitude = way_long;
+					p_airport->name = "Custom Hospital";
+
+					m_custom_hospitals.push_back(p_airport);
+					p_airport = new HRM_Airport();
+					
+				}
+			}
+
+
+		}
+
+		delete p_airport;
+
+	}
+	catch (...)
+	{
+		HRMDebugString("Could not read custom hospital file");
+	}
+}
+
+void HRM_PlugIn::SaveCustomICAOs()
+{
+	std::ofstream fms_file;
+	fms_file.open(m_config_path + "custom_hospitals.fms", std::ios::out);
+
+	if (fms_file.is_open())
+	{
+		fms_file << "I" << std::endl;
+		fms_file << "1100 Version" << std::endl;
+		fms_file << "CYCLE " << m_cm_airac_cycle << std::endl;
+		fms_file << "DEP " << std::endl;
+		fms_file << "DES " << std::endl;
+		fms_file << "NUMENR 3" << std::endl;
+
+		fms_file.precision(9);
+
+		for (auto p_airport : m_custom_hospitals)
+		{
+			fms_file << "28 " << p_airport->icao <<" DEP 25000.000000 " << p_airport->latitude << " " << p_airport->longitude << std::endl;
+		}
+
+		fms_file.close();
+	}
+	else
+	{
+		HRMDebugString("Could not write custom hospital file");
+	}
+}
+
+void HRM_PlugIn::AddCustomICAO()
+{
+	m_custom_icao_exists = false;
+
+	for (auto p_airport : m_custom_hospitals)
+	{
+		if (p_airport->icao.compare(m_custom_icao) == 0)
+		{
+			p_airport->latitude = m_ld_latitude;
+			p_airport->longitude = m_ld_longitude;
+			p_airport->name = "Custom Hospital";
+
+			m_custom_icao_exists = true;
+			return;
+		}
+	}
+
+	HRM_Airport *p_airport = new HRM_Airport();
+
+	p_airport->icao = m_custom_icao;
+	p_airport->latitude = m_ld_latitude;
+	p_airport->longitude = m_ld_longitude;
+	p_airport->name = "Custom Hospital";
+
+	m_custom_hospitals.push_back(p_airport);
+
+	SaveCustomICAOs();
+	
 }
 
 void HRM_PlugIn::ReadFSEAirports()
@@ -939,6 +1074,113 @@ void HRM_PlugIn::ReadWaypoints(std::vector<HRM_Waypoint*>& waypoint_vector, std:
 
 }
 
+void HRM_PlugIn::SaveConfig()
+{
+	boost::property_tree::ptree pt;
+
+	//pt.push_back("HRM.", );
+
+	pt.put("HRM.collective_down_threshold", m_cm_collective_min);
+
+	pt.put("HRM.airac_cycle", m_cm_airac_cycle);
+	pt.put("HRM.patient_weight_kg", m_patient_weight);
+	pt.put("HRM.helicopter_crew_weight_kg", m_crew_weight);
+	pt.put("HRM.ems_equipment_weight_kg", m_ems_equippment_weight);
+	pt.put("HRM.adjust_payload_enable", m_adjust_payload);
+	pt.put("HRM.scenario_position_type", (int) m_cm_use_position);
+	pt.put("HRM.scenario_min_distance_nm", m_cm_min_distance);
+	pt.put("HRM.scenario_max_distance_nm", m_cm_max_distance);
+	pt.put("HRM.scenario_icao", m_cm_scenario_icao);
+	pt.put("HRM.hospital_icao", m_cm_hospital_icao);
+	pt.put("HRM.panic_call_enabled", m_cm_estmimated_wp);
+	pt.put("HRM.panic_call_search_area_m", m_cm_estimated_radius_m);
+	pt.put("HRM.fse_enabled", m_cm_enable_fse);
+	pt.put("HRM.fse_autoconnect_enabled", m_cm_autoconnect_fse);
+	pt.put("HRM.fse_max_airport_radius_nm", m_cm_fse_airport_radius);
+	pt.put("HRM.difficulty_index", m_difficutly);
+	pt.put("HRM.pos_calc_rate_s", m_position_calc_rate);
+	pt.put("HRM.pickup_countdown_s", m_patient_countdown_value);
+	pt.put("HRM.hospital_delivery_countdown_s", m_hospital_countdown_value);
+	
+	boost::property_tree::ini_parser::write_ini(m_config_path + "HRM.ini", pt);
+}
+
+void HRM_PlugIn::ReadConfig()
+{
+	boost::property_tree::ptree pt;
+	try
+	{
+		boost::property_tree::ini_parser::read_ini(m_config_path + "HRM.ini", pt);
+	}
+	catch (...)
+	{
+		HRMDebugString("Could not read config file");
+		return;
+	}
+
+	try { m_cm_collective_min = pt.get<float>("HRM.collective_down_threshold"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_cm_airac_cycle = pt.get<int>("HRM.airac_cycle"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_patient_weight = pt.get<float>("HRM.patient_weight_kg"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_crew_weight = pt.get<float>("HRM.helicopter_crew_weight_kg"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_ems_equippment_weight = pt.get<float>("HRM.ems_equipment_weight_kg"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_adjust_payload = pt.get<bool>("HRM.adjust_payload_enable"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_cm_use_position = (HRM::Scenario_Position) pt.get<int>("HRM.scenario_position_type"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_cm_min_distance = pt.get<int>("HRM.scenario_min_distance_nm"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_cm_max_distance = pt.get<int>("HRM.scenario_max_distance_nm"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_cm_scenario_icao = pt.get<std::string>("HRM.scenario_icao"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_cm_hospital_icao = pt.get<std::string>("HRM.hospital_icao"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_cm_estmimated_wp = pt.get<bool>("HRM.panic_call_enabled"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_cm_estimated_radius_m = pt.get<int>("HRM.panic_call_search_area_m"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_cm_enable_fse = pt.get<bool>("HRM.fse_enabled"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_cm_autoconnect_fse = pt.get<bool>("HRM.fse_autoconnect_enabled"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_cm_fse_airport_radius = pt.get<double>("HRM.fse_max_airport_radius_nm"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_difficutly = pt.get<int>("HRM.difficulty_index"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_position_calc_rate = pt.get<float>("HRM.pos_calc_rate_s"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_patient_countdown_value = pt.get<float>("HRM.pickup_countdown_s"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_hospital_countdown_value = pt.get<float>("HRM.hospital_delivery_countdown_s"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+
+}
+
 void HRM_PlugIn::SaveMissions()
 {
 
@@ -1040,6 +1282,8 @@ void HRM_PlugIn::ReadDataSlow()
 	m_li_sim_ground_speed = XPLMGetDatai(m_i_sim_ground_speed);
 
 	m_li_battery_on = XPLMGetDatai(m_i_battery_on);
+
+	m_li_jett_is_slung = XPLMGetDatai(m_i_jett_is_slung);
 
 	XPLMGetDatavf(m_fa_prop_ratio, m_lfa_prop_ratio, 0, 1);
 }
@@ -1188,50 +1432,78 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 
 				bool hospital_search_finished = false;
 				bool hospital_navaid_found = false;
+				bool custom_hospital_found = false;
 
 				XPLMNavRef nav_hospital = XPLM_NAV_NOT_FOUND;
 
 				if (m_cm_hospital_icao.size() > 2)
 				{
-					nav_hospital = XPLMFindFirstNavAidOfType(xplm_Nav_Airport);
+					
 
-					XPLMNavType nav_type_hospital = xplm_Nav_Airport;
-
-
-					for (int index = 0; (hospital_search_finished == false) && (hospital_navaid_found == false); index++)
+					// Custom Hospitals
+					if (m_custom_hospitals.size() > 0)
 					{
-						if (index == 0) nav_hospital = XPLMFindFirstNavAidOfType(xplm_Nav_Airport);
-						else nav_hospital = XPLMGetNextNavAid(nav_hospital);
-
-						if (nav_hospital != XPLM_NAV_NOT_FOUND)
+						for (auto p_airport : m_custom_hospitals)
 						{
-							char buffer[2048];
-							XPLMGetNavAidInfo(nav_hospital, &nav_type_hospital, &m_mission_hospital_lat, &m_mission_hospital_long, NULL, NULL, NULL, buffer, NULL, NULL);
+							if (p_airport->icao.compare(m_cm_hospital_icao) == 0)
+							{
+								m_mission_hospital_lat = p_airport->latitude;
+								m_mission_hospital_long = p_airport->longitude;
+								m_mission_hospital_icao_name = p_airport->name;
+								m_mission_hospital_icao_found = true;
 
-							if (nav_type_hospital != xplm_Nav_Airport)			hospital_search_finished = true;
-							else if (m_cm_hospital_icao.compare(buffer) == 0)	hospital_navaid_found = true;
-
+								custom_hospital_found = true;
+							}
 						}
-						else
+					}
+
+					// X-Plane Hospitals
+					if (custom_hospital_found == false)
+					{
+						nav_hospital = XPLMFindFirstNavAidOfType(xplm_Nav_Airport);
+
+						XPLMNavType nav_type_hospital = xplm_Nav_Airport;
+
+
+						for (int index = 0; (hospital_search_finished == false) && (hospital_navaid_found == false); index++)
 						{
-							hospital_search_finished = true;
+							if (index == 0) nav_hospital = XPLMFindFirstNavAidOfType(xplm_Nav_Airport);
+							else nav_hospital = XPLMGetNextNavAid(nav_hospital);
+
+							if (nav_hospital != XPLM_NAV_NOT_FOUND)
+							{
+								char buffer[2048];
+								XPLMGetNavAidInfo(nav_hospital, &nav_type_hospital, &m_mission_hospital_lat, &m_mission_hospital_long, NULL, NULL, NULL, buffer, NULL, NULL);
+
+								if (nav_type_hospital != xplm_Nav_Airport)			hospital_search_finished = true;
+								else if (m_cm_hospital_icao.compare(buffer) == 0)	hospital_navaid_found = true;
+
+							}
+							else
+							{
+								hospital_search_finished = true;
+							}
 						}
 					}
 				}
 
-				if ((nav_hospital != XPLM_NAV_NOT_FOUND) && (hospital_navaid_found == true))
+				if (custom_hospital_found == false)
 				{
-					char buffer[2048];
-					XPLMGetNavAidInfo(nav_hospital, NULL, &m_mission_hospital_lat, &m_mission_hospital_long, NULL, NULL, NULL, NULL, buffer, NULL);
-					m_mission_hospital_icao_name = buffer;
-					m_mission_hospital_icao_found = true;
-				}
-				else
-				{
-					m_mission_hospital_icao_found = false;
-					m_mission_hospital_icao_name = "";
-					m_mission_hospital_lat = HRM::coord_invalid;
-					m_mission_hospital_long = HRM::coord_invalid;
+
+					if ((nav_hospital != XPLM_NAV_NOT_FOUND) && (hospital_navaid_found == true))
+					{
+						char buffer[2048];
+						XPLMGetNavAidInfo(nav_hospital, NULL, &m_mission_hospital_lat, &m_mission_hospital_long, NULL, NULL, NULL, NULL, buffer, NULL);
+						m_mission_hospital_icao_name = buffer;
+						m_mission_hospital_icao_found = true;
+					}
+					else
+					{
+						m_mission_hospital_icao_found = false;
+						m_mission_hospital_icao_name = "";
+						m_mission_hospital_lat = HRM::coord_invalid;
+						m_mission_hospital_long = HRM::coord_invalid;
+					}
 				}
 
 				
@@ -1274,17 +1546,31 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 					// If within 100m and collective down or fse can finish
 					if (calc_distance_m(m_ld_latitude, m_ld_longitude, mp_cm_waypoint->latitude, mp_cm_waypoint->longitude) < HRM::pickup_max_distance)
 					{
-						if ((m_cm_enable_fse == true) && (m_cm_autoconnect_fse == true) && ((FSECanFinish() == true) || (FSEIsFlying() == false))) 
+						// Sling load mission just needs to get hooked
+						if (mp_cm_mission->IsSlingLoad() == true)
 						{
-							FSEFinishFlight();
-
-							m_mission_at_patient_countdown = m_patient_countdown_value;
-							m_mission_state = HRM::State_At_Patient;
+							if ((m_li_jett_is_slung > 0) && (m_li_jett_is_slung_old == 0))
+							{
+								m_mission_at_patient_countdown = m_patient_countdown_value;
+								m_mission_state = HRM::State_At_Patient;
+							}
 						}
-						else if ((m_lfa_prop_ratio[0] < m_cm_collective_min) && (m_cm_autoconnect_fse == false))
+						else
 						{
-							m_mission_at_patient_countdown = m_patient_countdown_value;
-							m_mission_state = HRM::State_At_Patient;
+
+
+							if ((m_cm_enable_fse == true) && (m_cm_autoconnect_fse == true) && ((FSECanFinish() == true) || (FSEIsFlying() == false)))
+							{
+								FSEFinishFlight();
+
+								m_mission_at_patient_countdown = m_patient_countdown_value;
+								m_mission_state = HRM::State_At_Patient;
+							}
+							else if ((m_lfa_prop_ratio[0] < m_cm_collective_min) && (m_cm_autoconnect_fse == false))
+							{
+								m_mission_at_patient_countdown = m_patient_countdown_value;
+								m_mission_state = HRM::State_At_Patient;
+							}
 						}
 
 
@@ -1336,13 +1622,23 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 					// If within 100m and collective down
 					if (calc_distance_m(m_ld_latitude, m_ld_longitude, m_mission_hospital_lat, m_mission_hospital_long) < HRM::hospital_max_distance)
 					{
-						if ((m_cm_enable_fse == true) && (m_cm_autoconnect_fse == true) && ((FSECanFinish() == true) || (FSEIsFlying() == false)))
+
+						// dropping sling load at hospital automatically finished mission
+						if ((mp_cm_mission->IsSlingLoad() == true) &&(m_li_jett_is_slung == 0) && (m_li_jett_is_slung_old > 0))
+						{
+							MissionFinish();
+						}
+
+						// FSE Autoconnect
+						else if ((m_cm_enable_fse == true) && (m_cm_autoconnect_fse == true) && ((FSECanFinish() == true) || (FSEIsFlying() == false)))
 						{
 							FSEFinishFlight();
 
 							m_mission_at_hospital_countdown = m_hospital_countdown_value;
 							m_mission_state = HRM::State_At_Hospital;
 						}
+
+						// Normal Mode
 						else if ((m_lfa_prop_ratio[0] < m_cm_collective_min) && (m_cm_autoconnect_fse == false))
 						{
 
@@ -1380,6 +1676,9 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			}
 
 			// End of Slow Computations
+
+			m_li_jett_is_slung_old = m_li_jett_is_slung;
+
 
 			m_time_delta = 0;
 		}

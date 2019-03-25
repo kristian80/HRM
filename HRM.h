@@ -40,6 +40,7 @@
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
+#include <boost/property_tree/ini_parser.hpp>
 
 // OS X: we use this to convert our file path.
 #if APL
@@ -61,19 +62,19 @@
 
 struct HRM_Waypoint
 {
-	double latitude;
-	double longitude;
-	double heading;
-	double lat_heading;
-	double long_heading;
+	double latitude = 0;
+	double longitude = 0;
+	double heading = 0;
+	double lat_heading = 0;
+	double long_heading = 0;
 };
 
 struct HRM_Airport
 {
-	std::string icao;
-	std::string name;
-	double latitude;
-	double longitude;
+	std::string icao = "";
+	std::string name = "";
+	double latitude = 0;
+	double longitude = 0;
 	
 };
 
@@ -82,9 +83,7 @@ namespace HRM
 	const int wp_code = 28;
 	const int max_scenery = 100;
 
-	const float patient_weight = 75;
-	const float crew_weight = 225;
-	const float ems_equippment_weight = 350;
+	
 
 	const int pickup_max_distance = 100;
 	const int hospital_max_distance = 500;
@@ -169,11 +168,11 @@ namespace HRM
 	const int points_speed_flight2 = 25;
 	const int points_g_flight2 = 50;
 
-	const float eval_g_total_factor = 1;
+	const float eval_g_total_factor = 10;
 
 	const float eval_g_low_factor = 1;
-	const float eval_g_med_factor = 2;
-	const float eval_g_high_factor = 3;
+	const float eval_g_med_factor = 10;
+	const float eval_g_high_factor = 30;
 
 	const float eval_flight1_nominal_speed = 120;
 	const float eval_flight2_nominal_speed = 120;

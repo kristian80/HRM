@@ -23,6 +23,7 @@ public:
 	std::shared_ptr<HRMImguiWidget> imguiPtr;
 
 	std::vector<HRM_Airport *> m_fse_airports;
+	std::vector<HRM_Airport *> m_custom_hospitals;
 
 	std::vector<HRM_Mission *> m_street_missions;
 	std::vector<HRM_Mission *> m_urban_missions;
@@ -67,10 +68,14 @@ public:
 	float m_cm_collective_min = 0.1;
 	int m_cm_airac_cycle = 1809;
 
-	int m_cm_mission_type = 0;
+	float m_patient_weight = 75;
+	float m_crew_weight = 225;
+	float m_ems_equippment_weight = 350;
+
+	bool m_adjust_payload = false;
 
 	HRM::Scenario_Position m_cm_use_position = HRM::Scenairo_Aircraft;
-	bool m_cm_use_airport = false;
+	//bool m_cm_use_airport = false;
 	std::string m_cm_scenario_icao = "";
 	bool m_cm_enable_fse = false;
 	bool m_cm_autoconnect_fse = false;
@@ -87,8 +92,6 @@ public:
 	int m_difficutly = HRM::Normal;
 	float m_position_calc_rate = 0.5;
 	float m_patient_countdown_value = 30;
-	float m_patient_fse_finish_value = 20;
-	float m_patient_fse_restart_value = 10;
 	float m_hospital_countdown_value = 10;
 
 	
@@ -99,6 +102,7 @@ public:
 	bool m_cm_no_waypoint_found = false;
 	bool m_cm_cancelling = false;
 	bool m_cm_not_on_ground = false;
+	bool m_custom_icao_exists = false;
 
 	HRM_Waypoint *mp_cm_waypoint = NULL;
 	HRM_Mission *mp_cm_mission = NULL;
@@ -219,6 +223,8 @@ public:
 	XPLMDataRef m_f_pitch;
 	XPLMDataRef m_f_roll;
 
+	XPLMDataRef m_i_jett_is_slung;
+
 	/////////////////////////////////////////////////////////////////////////////////
 	// Dataref Variables
 
@@ -253,6 +259,9 @@ public:
 
 	float m_lf_pitch;
 	float m_lf_roll;
+
+	int m_li_jett_is_slung;
+	int m_li_jett_is_slung_old;
 
 public:
 	HRM_PlugIn();
@@ -290,10 +299,16 @@ public:
 
 
 	void CreateFlightPlan();
+	void ReadCustomICAOs();
+	void SaveCustomICAOs();
+	void AddCustomICAO();
 
 	void ReadFSEAirports();
 	void ReadWaypoints(std::vector<HRM_Waypoint *> &waypoint_vector, std::string file_name);
-
+	
+	void SaveConfig();
+	void ReadConfig();
+	
 	void SaveMissions();
 	void ReadMissions();
 

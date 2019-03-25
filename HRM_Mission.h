@@ -36,6 +36,8 @@ public:
 	void SetPosition(double zero_latitude, double zero_longitude, double zero_heading);
 	void SetObjectPosition();
 
+	bool IsSlingLoad();
+
 	void RemoveMission(void);
 	void RemovePatients(void);
 	void DrawMission(void);

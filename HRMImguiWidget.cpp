@@ -82,7 +82,11 @@ void HRMImguiWidget::buildInterface()
 		ImGui::Checkbox("Street Accidents", &(pHRM->m_street_enable));
 		ImGui::Checkbox("Urban Accidents", &(pHRM->m_urban_enable));
 		ImGui::Checkbox("Search and Rescue", &(pHRM->m_sar_enable));
-		ImGui::Checkbox("Sling Rescue", &(pHRM->m_sling_enable));
+		//ImGui::Checkbox("Sling Rescue", &(pHRM->m_sling_enable));
+
+		ImGui::Spacing();
+
+		ImGui::Checkbox("Adjust Payload", &(pHRM->m_adjust_payload));
 
 		ImGui::NextColumn();
 
@@ -167,7 +171,14 @@ void HRMImguiWidget::buildInterface()
 		ImGui::SameLine();
 		if (ImGui::Button("Save ACF Location as Hospital", ImVec2(230, 20)))
 		{
-			
+			pHRM->AddCustomICAO();
+		}
+
+		if (pHRM->m_custom_icao_exists == true)
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, color_yellow);
+			ImGui::Text("ICAO position updated");
+			ImGui::PopStyleColor();
 		}
 
 		ImGui::Spacing();
