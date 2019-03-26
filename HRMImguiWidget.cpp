@@ -15,7 +15,7 @@ HRMImguiWidget::HRMImguiWidget(HRM_PlugIn *pHRMNew, int left, int top, int right
 	ImgWindow(left, top, right, bot, decoration)
 {
 	pHRM = pHRMNew;
-	SetWindowTitle("HRM");
+	SetWindowTitle("Helicopter Rescue Missions");
 	SetVisible(false);
 	//configureImguiContext();
 }

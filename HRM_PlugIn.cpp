@@ -853,6 +853,11 @@ void HRM_PlugIn::AddCustomICAO()
 {
 	m_custom_icao_exists = false;
 
+	if (m_custom_icao.size() == 0)
+	{
+		return;
+	}
+
 	for (auto p_airport : m_custom_hospitals)
 	{
 		if (p_airport->icao.compare(m_custom_icao) == 0)
@@ -1094,6 +1099,12 @@ void HRM_PlugIn::SaveConfig()
 	pt.put("HRM.helicopter_crew_weight_kg", m_crew_weight);
 	pt.put("HRM.ems_equipment_weight_kg", m_ems_equippment_weight);
 	pt.put("HRM.adjust_payload_enable", m_adjust_payload);
+
+	pt.put("HRM.street_enable", m_street_enable);
+	pt.put("HRM.urban_enable", m_urban_enable);
+	pt.put("HRM.sar_enable", m_sar_enable);
+	pt.put("HRM.sling_enable", m_sling_enable);
+
 	pt.put("HRM.scenario_position_type", (int) m_cm_use_position);
 	pt.put("HRM.scenario_min_distance_nm", m_cm_min_distance);
 	pt.put("HRM.scenario_max_distance_nm", m_cm_max_distance);
@@ -1141,6 +1152,18 @@ void HRM_PlugIn::ReadConfig()
 	catch (...) { HRMDebugString("Ini File: Entry not found."); }
 
 	try { m_adjust_payload = pt.get<bool>("HRM.adjust_payload_enable"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_street_enable = pt.get<bool>("HRM.street_enable"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_urban_enable = pt.get<bool>("HRM.urban_enable"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_sar_enable = pt.get<bool>("HRM.sar_enable"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_sling_enable = pt.get<bool>("HRM.sling_enable"); }
 	catch (...) { HRMDebugString("Ini File: Entry not found."); }
 
 	try { m_cm_use_position = (HRM::Scenario_Position) pt.get<int>("HRM.scenario_position_type"); }
