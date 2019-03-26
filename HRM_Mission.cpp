@@ -22,7 +22,8 @@ void HRM_Mission::SetPosition(double zero_latitude, double zero_longitude, doubl
 
 void HRM_Mission::SetObjectPosition()
 {
-	for (auto p_obj : m_object_vector) p_obj->SetPositionCart(m_ld_latitude, m_ld_longitude, m_lf_heading);
+	for (auto p_obj : m_object_vector) 
+		p_obj->SetPositionCart(m_ld_latitude, m_ld_longitude, m_lf_heading);
 }
 
 bool HRM_Mission::IsSlingLoad()

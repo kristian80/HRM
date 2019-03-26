@@ -81,7 +81,7 @@ void HRM_Object::SetPosition(double zero_latitude, double zero_longitude, double
 	info.structSize = sizeof(info);
 
 	XPLMProbeResult result = XPLMProbeTerrainXYZ(m_probe, zero_x, zero_y, zero_z, &info);
-	//result = XPLMProbeTerrainXYZ(m_probe, zero_x, zero_y, info.locationZ, &info);  // Twice for improved precision
+	result = XPLMProbeTerrainXYZ(m_probe, zero_x, zero_y, info.locationZ, &info);  // Twice for improved precision
 	
 	double local_long;
 	double local_lat;
@@ -98,7 +98,7 @@ void HRM_Object::SetPosition(double zero_latitude, double zero_longitude, double
 	if (result == xplm_ProbeHitTerrain)
 	{
 		
-		double total_pitch = (-1.f * asin(info.normalX) * 180 / M_PI) + m_pitch;
+		double total_pitch = (1.f * asin(info.normalX) * 180 / M_PI) + m_pitch;
 		double total_roll = (-1.f * acos(info.normalY) * 180 / M_PI) + m_roll;
 
 		if (total_pitch > 360) total_pitch -= 360.f;

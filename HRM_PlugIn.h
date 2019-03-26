@@ -168,6 +168,7 @@ public:
 	int m_mission_points_flight1 = 0;
 	int m_mission_points_flight2 = 0;
 	int m_mission_points_g_force = 0;
+	int m_mission_points_difficulty = 0;
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// FSEconomy
@@ -201,6 +202,7 @@ public:
 
 	XPLMDataRef m_i_paused;
 	XPLMDataRef m_i_replay;
+	XPLMDataRef m_i_vr_enabled;
 
 	XPLMDataRef m_i_fse_flying;
 
@@ -238,6 +240,7 @@ public:
 
 	int m_li_paused;
 	int m_li_replay;
+	int m_li_vr_enabled;
 
 	int m_li_fse_flying;
 

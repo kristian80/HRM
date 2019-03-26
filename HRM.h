@@ -124,16 +124,16 @@ namespace HRM
 	const float preflight_time_normal = 150;
 	const float preflight_time_hard = 90;
 
-	const float flight_time_up_down_easy = 60;
-	const float flight_time_up_down_normal = 45;
-	const float flight_time_up_down_hard = 30;
+	const float flight_time_up_down_easy = 300;
+	const float flight_time_up_down_normal = 90;
+	const float flight_time_up_down_hard = 45;
 
 	const float flight_time_per_nm_easy = 60;
 	const float flight_time_per_nm_normal = 45;
 	const float flight_time_per_nm_hard = 30;
 
-	const float flight_time_search_easy = 300;
-	const float flight_time_search_normal = 180;
+	const float flight_time_search_easy = 1800;
+	const float flight_time_search_normal = 600;
 	const float flight_time_search_hard = 150;
 
 	const float flight_time_sling_easy = 600;
@@ -164,9 +164,14 @@ namespace HRM
 	const float threshold_gv_neg_med = 0;
 	const float threshold_gv_neg_high = 0;
 
-	const int points_speed_flight1 = 25;
-	const int points_speed_flight2 = 25;
-	const int points_g_flight2 = 50;
+	const int points_difficulty = 20;
+	const int points_speed_flight1 = 20;
+	const int points_speed_flight2 = 20;
+	const int points_g_flight2 = 40;
+
+	const int points_easy = 0;
+	const int points_normal = 10;
+	const int points_hard = 20;
 
 	const float eval_g_total_factor = 10;
 

@@ -70,6 +70,7 @@ void HRMImguiWidget::buildInterface()
 
 	if (pHRM->m_mission_state == HRM::State_Create_Mission)
 	{
+		
 		ImGui::Columns(2, 0, true);
 
 		ImGui::SetColumnWidth(-1, 180);
@@ -84,6 +85,8 @@ void HRMImguiWidget::buildInterface()
 		ImGui::Checkbox("Search and Rescue", &(pHRM->m_sar_enable));
 		//ImGui::Checkbox("Sling Rescue", &(pHRM->m_sling_enable));
 
+		ImGui::Spacing();
+		ImGui::Spacing();
 		ImGui::Spacing();
 
 		ImGui::Checkbox("Adjust Payload", &(pHRM->m_adjust_payload));
@@ -680,28 +683,80 @@ void HRMImguiWidget::buildInterface()
 		ImGui::SameLine();
 		ImGui::Text(std::to_string(pHRM->m_mission_flight2_avg_speed).c_str());
 
+		ImGui::PopItemWidth();
+
 		ImGui::Spacing();
 		ImGui::Separator();
 		ImGui::Spacing();
 
-		ImGui::Text("Flight1 Points:");
+		ImGui::Text("Difficulty Level:");
+		ImGui::SameLine();
+		ImGui::SetCursorPosX(250);
+		ImGui::Text("%3i/%3i", pHRM->m_mission_points_difficulty, HRM::points_difficulty);
+
+		ImGui::Text("Flight1 Speed:");
+		ImGui::SameLine();
+		ImGui::SetCursorPosX(250);
+		ImGui::Text("%3i/%3i", pHRM->m_mission_points_flight1, HRM::points_speed_flight1);
+
+		ImGui::Text("Flight2 Speed:");
+		ImGui::SameLine();
+		ImGui::SetCursorPosX(250);
+		ImGui::Text("%3i/%3i", pHRM->m_mission_points_flight2, HRM::points_speed_flight2);
+
+		ImGui::Text("Patient Comfort Level:");
+		ImGui::SameLine();
+		ImGui::SetCursorPosX(250);
+		ImGui::Text("%3i/%3i", pHRM->m_mission_points_g_force, HRM::points_g_flight2);
+
+		ImGui::Text("Total Points:");
+		ImGui::SameLine();
+		ImGui::SetCursorPosX(250);
+		ImGui::Text("%3i/%3i", pHRM->m_mission_points_total, 100);
+
+		////////////////////////////
+		/*
+
+		ImGui::Text("Difficulty Level:");
+		ImGui::SameLine();
+		ImGui::Text(std::to_string(pHRM->m_mission_points_difficulty).c_str());
+		ImGui::SameLine();
+		ImGui::Text("/");
+		ImGui::SameLine();
+		ImGui::Text(std::to_string(HRM::points_difficulty).c_str());
+
+		ImGui::Text("Flight1 Speed:");
 		ImGui::SameLine();
 		ImGui::Text(std::to_string(pHRM->m_mission_points_flight1).c_str());
+		ImGui::SameLine();
+		ImGui::Text("/ ");
+		ImGui::SameLine();
+		ImGui::Text(std::to_string(HRM::points_speed_flight1).c_str());
 			
-		ImGui::Text("Flight2 Points:");
+		ImGui::Text("Flight2 Speed:");
 		ImGui::SameLine();
 		ImGui::Text(std::to_string(pHRM->m_mission_points_flight2).c_str());
+		ImGui::SameLine();
+		ImGui::Text("/ ");
+		ImGui::SameLine();
+		ImGui::Text(std::to_string(HRM::points_speed_flight2).c_str());
 
-		ImGui::Text("Smoothness Points:");
+		ImGui::Text("Passenger Comfort Level:");
 		ImGui::SameLine();
 		ImGui::Text(std::to_string(pHRM->m_mission_points_g_force).c_str());
+		ImGui::SameLine();
+		ImGui::Text("/ ");
+		ImGui::SameLine();
+		ImGui::Text(std::to_string(HRM::points_g_flight2).c_str());
 
 		ImGui::Text("Total Points:");
 		ImGui::SameLine();
 		ImGui::Text(std::to_string(pHRM->m_mission_points_total).c_str());
+		ImGui::SameLine();
+		ImGui::Text("/100");*/
 
 
-		ImGui::PopItemWidth();
+		
 
 		ImGui::Spacing();
 		ImGui::Separator();
@@ -780,6 +835,22 @@ void HRMImguiWidget::buildInterface()
 			ImGui::TextWrapped("FSE Cannot Finish Flight");
 			ImGui::PopStyleColor();
 		}
+	}
+
+	if (pHRM->m_li_vr_enabled > 0)
+	{
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		if (pHRM->m_li_sim_ground_speed == 1)	ImGui::PushStyleColor(ImGuiCol_Text, color_green);
+		else									ImGui::PushStyleColor(ImGuiCol_Text, color_yellow);
+			
+		ImGui::Text("Ground Speed: ");
+		ImGui::SameLine();
+		ImGui::Text(std::to_string(pHRM->m_li_sim_ground_speed).c_str());
+		ImGui::PopStyleColor();
+
 	}
 
 	

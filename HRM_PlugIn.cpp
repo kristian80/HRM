@@ -114,6 +114,7 @@ void HRM_PlugIn::PluginStart()
 
 	m_i_paused = XPLMFindDataRef("sim/time/paused");
 	m_i_replay = XPLMFindDataRef("sim/operation/prefs/replay_mode");
+	m_i_vr_enabled = XPLMFindDataRef("sim/graphics/VR/enabled");
 
 	m_i_fse_flying = XPLMFindDataRef("fse/status/flying");
 	
@@ -570,6 +571,7 @@ void HRM_PlugIn::MissionFinish()
 	m_mission_points_flight1 = 0;
 	m_mission_points_flight2 = 0;
 	m_mission_points_g_force = 0;
+	m_mission_points_difficulty = 0;
 
 
 	// If the Mission Time failed, you do not get any points
@@ -580,7 +582,11 @@ void HRM_PlugIn::MissionFinish()
 
 		m_mission_points_g_force = ((float)HRM::points_g_flight2) / (1.f + (g_force_seconds/ HRM::eval_g_total_factor));
 
-		m_mission_points_total = m_mission_points_flight1 + m_mission_points_flight2 + m_mission_points_g_force;
+		if (m_difficutly == HRM::Hard) m_mission_points_difficulty = HRM::points_hard;
+		else if (m_difficutly == HRM::Normal) m_mission_points_difficulty = HRM::points_normal;
+		else m_mission_points_difficulty = HRM::points_easy;
+
+		m_mission_points_total = m_mission_points_flight1 + m_mission_points_flight2 + m_mission_points_g_force + m_mission_points_difficulty;
 
 	}
 
@@ -640,6 +646,7 @@ void HRM_PlugIn::MissionReset()
 	m_mission_points_flight1 = 0;
 	m_mission_points_flight2 = 0;
 	m_mission_points_g_force = 0;
+	m_mission_points_difficulty = 0;
 }
 
 void HRM_PlugIn::MissionCancel()
@@ -1258,10 +1265,8 @@ void HRM_PlugIn::ReadDataFast()
 
 void HRM_PlugIn::ReadDataSlow()
 {
-	m_li_paused = XPLMGetDatai(m_i_paused);
-	m_li_replay = XPLMGetDatai(m_i_replay);
 
-	m_li_paused = XPLMGetDatai(m_i_paused);
+	m_li_vr_enabled = XPLMGetDatai(m_i_vr_enabled);
 
 	if (m_fse_dr_is_connected != NULL)		m_fse_li_is_connected	= XPLMGetDatai(m_fse_dr_is_connected);
 	if (m_fse_dr_is_flying != NULL)			m_fse_li_is_flying		= XPLMGetDatai(m_fse_dr_is_flying);
@@ -1530,6 +1535,8 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			}
 			else if (m_mission_state == HRM::State_Flight_1)
 			{
+				mp_cm_mission->SetObjectPosition();
+
 				if (m_li_on_ground == 0)
 				{
 					m_mission_flight1_countdown -= m_time_delta * m_li_sim_ground_speed;
