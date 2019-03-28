@@ -165,6 +165,7 @@ public:
 	float m_mission_gv_neg_high = 0;
 
 	int m_mission_points_total = 0;
+	int m_mission_points_search_range = 0;
 	int m_mission_points_flight1 = 0;
 	int m_mission_points_flight2 = 0;
 	int m_mission_points_g_force = 0;

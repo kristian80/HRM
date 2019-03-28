@@ -572,6 +572,7 @@ void HRM_PlugIn::MissionFinish()
 	m_mission_points_flight2 = 0;
 	m_mission_points_g_force = 0;
 	m_mission_points_difficulty = 0;
+	m_mission_points_search_range = 0;
 
 
 	// If the Mission Time failed, you do not get any points
@@ -586,9 +587,16 @@ void HRM_PlugIn::MissionFinish()
 		else if (m_difficutly == HRM::Normal) m_mission_points_difficulty = HRM::points_normal;
 		else m_mission_points_difficulty = HRM::points_easy;
 
-		m_mission_points_total = m_mission_points_flight1 + m_mission_points_flight2 + m_mission_points_g_force + m_mission_points_difficulty;
+		if (m_cm_estmimated_wp == true)
+		{
+			m_mission_points_search_range = (HRM::points_search_range * m_cm_estimated_radius_m) / HRM::search_range_max;
+		}
+
+		m_mission_points_total = m_mission_points_flight1 + m_mission_points_flight2 + m_mission_points_g_force + m_mission_points_difficulty + m_mission_points_search_range;
 
 	}
+
+	
 
 
 	
@@ -647,6 +655,7 @@ void HRM_PlugIn::MissionReset()
 	m_mission_points_flight2 = 0;
 	m_mission_points_g_force = 0;
 	m_mission_points_difficulty = 0;
+	m_mission_points_search_range = 0;
 }
 
 void HRM_PlugIn::MissionCancel()

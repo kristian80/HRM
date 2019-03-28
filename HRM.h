@@ -167,7 +167,8 @@ namespace HRM
 	const int points_difficulty = 20;
 	const int points_speed_flight1 = 20;
 	const int points_speed_flight2 = 20;
-	const int points_g_flight2 = 40;
+	const int points_g_flight2 = 30;
+	const int points_search_range = 10;
 
 	const int points_easy = 0;
 	const int points_normal = 10;
@@ -182,6 +183,9 @@ namespace HRM
 	const float eval_flight1_nominal_speed = 120;
 	const float eval_flight2_nominal_speed = 120;
 	const float eval_flight2_sling_nominal_speed = 50;
+
+	const int search_range_min = 500;
+	const int search_range_max = 5000;
 
 	
 

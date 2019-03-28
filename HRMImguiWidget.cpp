@@ -145,6 +145,13 @@ void HRMImguiWidget::buildInterface()
 		}
 
 		ImGui::Checkbox("Panic Call", &(pHRM->m_cm_estmimated_wp));
+
+		if (pHRM->m_cm_estmimated_wp == true)
+		{
+			ImGui::PushItemWidth(100);
+			ImGui::SliderInt("Search Range [m]", &(pHRM->m_cm_estimated_radius_m), HRM::search_range_min, HRM::search_range_max);
+			ImGui::PopItemWidth();
+		}
 		
 
 		ImGui::PushItemWidth(100);
@@ -693,6 +700,11 @@ void HRMImguiWidget::buildInterface()
 		ImGui::SameLine();
 		ImGui::SetCursorPosX(250);
 		ImGui::Text("%3i/%3i", pHRM->m_mission_points_difficulty, HRM::points_difficulty);
+
+		ImGui::Text("Search Range:");
+		ImGui::SameLine();
+		ImGui::SetCursorPosX(250);
+		ImGui::Text("%3i/%3i", pHRM->m_mission_points_search_range, HRM::points_search_range);
 
 		ImGui::Text("Flight1 Speed:");
 		ImGui::SameLine();
