@@ -83,7 +83,14 @@ void HRMImguiWidget::buildInterface()
 		ImGui::Checkbox("Street Accidents", &(pHRM->m_street_enable));
 		ImGui::Checkbox("Urban Accidents", &(pHRM->m_urban_enable));
 		ImGui::Checkbox("Search and Rescue", &(pHRM->m_sar_enable));
-		//ImGui::Checkbox("Sling Rescue", &(pHRM->m_sling_enable));
+		ImGui::Checkbox("Sling Line", &(pHRM->m_sling_enable));
+
+		if (pHRM->m_xslingload_not_found == true)
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+			ImGui::Text("X-Slingline not found");
+			ImGui::PopStyleColor();
+		}
 
 		ImGui::Spacing();
 		ImGui::Spacing();
@@ -229,6 +236,8 @@ void HRMImguiWidget::buildInterface()
 		ImGui::TextWrapped("Feel free to load it into your flight planning software to create a more detailed route.");
 		ImGui::PopStyleColor();
 
+		
+
 		ImGui::Separator();
 
 		ImGui::Text("Mission Name:");
@@ -249,6 +258,22 @@ void HRMImguiWidget::buildInterface()
 		ImGui::Spacing();
 		ImGui::Separator();
 		ImGui::Spacing();
+
+		if (pHRM->m_xslingload_reload_position_file == true)
+		{
+
+			ImGui::PushStyleColor(ImGuiCol_Text, color_yellow);
+			ImGui::TextWrapped("IMPORTANT:");
+			ImGui::TextWrapped("You need to manually re-initialize X-Slingload Position File");
+			ImGui::TextWrapped("Otherwise X-Slingload does get the new positioning");
+			ImGui::TextWrapped("Plugins->X-Hoist->Init Sling Loading");
+			ImGui::PopStyleColor();
+
+			ImGui::Spacing();
+			ImGui::Separator();
+			ImGui::Spacing();
+
+		}
 
 		if (ImGui::Button("Start Mission", ImVec2(410, 20)))
 		{

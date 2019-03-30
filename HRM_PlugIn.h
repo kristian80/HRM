@@ -18,6 +18,10 @@ public:
 	std::string m_scenery_file = "";
 	std::string m_config_path = "";
 	std::string m_fms_file = "";
+
+	std::string m_xslingload_ini_path = "";
+	std::string m_xslingload_apt_path = "";
+
 	//int m_scenery_number = 1;
 
 	std::shared_ptr<HRMImguiWidget> imguiPtr;
@@ -60,6 +64,8 @@ public:
 
 	std::string m_custom_icao = "";
 
+	XPLMPluginID m_xslingload_id = XPLM_NO_PLUGIN_ID;
+
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// Mission Settings
 
@@ -94,6 +100,17 @@ public:
 	float m_patient_countdown_value = 30;
 	float m_hospital_countdown_value = 10;
 
+	float m_xslingload_treshold = 50;
+	float m_xslingload_weight_empty = 15;
+	float m_xslingload_weight_full = 140;
+	float m_xslingload_size_empty = 0;
+	float m_xslingload_size_full = 15;
+
+	float m_xslingload_offset = 0.75;
+
+	std::string m_xslingload_object_path = "./Custom Scenery/CDB-Library/Flora_Fauna/Birds_pets/fauna_birds_bird7.obj";
+
+	
 	
 
 	// Not Saved
@@ -103,6 +120,9 @@ public:
 	bool m_cm_cancelling = false;
 	bool m_cm_not_on_ground = false;
 	bool m_custom_icao_exists = false;
+	bool m_xslingload_not_found = false;
+	bool m_xslingload_found = false;
+	bool m_xslingload_reload_position_file = false;
 
 	HRM_Waypoint *mp_cm_waypoint = NULL;
 	HRM_Mission *mp_cm_mission = NULL;
@@ -226,7 +246,7 @@ public:
 	XPLMDataRef m_f_pitch;
 	XPLMDataRef m_f_roll;
 
-	XPLMDataRef m_i_jett_is_slung;
+	XPLMDataRef m_f_jett_weight;
 
 	/////////////////////////////////////////////////////////////////////////////////
 	// Dataref Variables
@@ -264,8 +284,8 @@ public:
 	float m_lf_pitch;
 	float m_lf_roll;
 
-	int m_li_jett_is_slung;
-	int m_li_jett_is_slung_old;
+	float m_lf_jett_weight = 0;
+	float m_lf_jett_weight_old = 0;
 
 public:
 	HRM_PlugIn();
@@ -285,6 +305,7 @@ public:
 	//void IvyDrawOutputWindow(XPLMWindowID in_window_id, void * in_refcon);
 	void PluginMenuHandler(void * in_menu_ref, void * in_item_ref);
 
+	void ConfigureXSlingload();
 	void MissionCreate();
 	void MissionStart();
 	void MissionStartFlight1();
@@ -300,6 +321,7 @@ public:
 	bool FSEIsFlying();
 	bool FSECanFinish();
 	void FSEFinishFlight();
+	
 
 
 	void CreateFlightPlan();

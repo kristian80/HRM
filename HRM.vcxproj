@@ -58,7 +58,7 @@
     <GenerateManifest>false</GenerateManifest>
     <TargetName>win</TargetName>
     <IncludePath>E:\Docs\Games\X-Plane\Ivy\imgui_tabs;E:\Docs\Games\X-Plane\IvyGit\Client_CPP\Ivy\SDK\CHeaders\Wrappers;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Include\;C:\Program Files %28x86%29\OpenAL 1.1 SDK\include;E:\Docs\Games\X-Plane\Ivy\imgui;E:\Docs\Games\X-Plane\Ivy\xsb_public;E:\Docs\Games\X-Plane\Ivy\boost_1_55_0\boost_1_55_0\;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files %28x86%29\OpenAL 1.1 SDK\libs\Win64;$(LibraryPath)</LibraryPath>
+    <LibraryPath>C:\Program Files %28x86%29\OpenAL 1.1 SDK\libs\Win64;E:\Docs\Games\X-Plane\Ivy\boost_1_55_0\boost_1_55_0\libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -114,8 +114,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;SIMDATA_EXPORTS;IBM=1;XPLM200=1;XPLM210=1;XPLM300=1;XPLM301=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>.\Debug\64\</AssemblerListingLocation>
       <PrecompiledHeaderOutputFile>.\Debug\64\HRM.pch</PrecompiledHeaderOutputFile>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <ObjectFileName>.\Debug\64\</ObjectFileName>
       <ProgramDataBaseFileName>.\Debug\64\</ProgramDataBaseFileName>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>

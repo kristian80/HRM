@@ -60,6 +60,9 @@ void HRM_PlugIn::PluginStart()
 
 	m_fms_file = m_system_path + "Output" + m_ds + "FMS plans" + m_ds + "HRM.fms";
 
+	m_xslingload_ini_path = m_system_path + "Resources" + m_ds + "plugins" + m_ds + "xslingload" + m_ds + "xslingload.ini";
+	m_xslingload_apt_path = m_system_path + "Resources" + m_ds + "plugins" + m_ds + "xslingload" + m_ds + "apt.dat";
+
 
 	srand(time(NULL));
 
@@ -137,7 +140,7 @@ void HRM_PlugIn::PluginStart()
 	m_f_pitch = XPLMFindDataRef("sim/flightmodel/position/theta");
 	m_f_roll = XPLMFindDataRef("sim/flightmodel/position/phi");
 
-	m_i_jett_is_slung = XPLMFindDataRef("sim/aircraft/overflow/acf_jett_is_slung");
+	m_f_jett_weight = XPLMFindDataRef("sim/flightmodel/weight/m_jettison");
 
 	ReadMissions();
 
@@ -255,6 +258,35 @@ void HRM_PlugIn::PluginMenuHandler(void * in_menu_ref, void * inItemRef)
 	}
 }
 
+void HRM_PlugIn::ConfigureXSlingload()
+{
+	std::ifstream read_ini_file(m_xslingload_ini_path);
+	std::string line_string;
+	std::vector<std::string> ini_lines;
+
+	while (std::getline(read_ini_file, line_string)) ini_lines.push_back(line_string);
+	read_ini_file.close();
+
+	std::ofstream write_ini_file(m_xslingload_ini_path);
+
+	write_ini_file << m_xslingload_object_path << "$" << m_xslingload_size_empty << "$" << m_xslingload_weight_empty << "$" << m_xslingload_size_full << "$" << m_xslingload_weight_full << "$" << m_xslingload_offset << std::endl;
+
+	for (int index = 1; index < ini_lines.size(); index++)
+		write_ini_file << ini_lines[index] << std::endl;
+
+	write_ini_file.close();
+
+	m_xslingload_reload_position_file = true;
+
+	std::ofstream write_apt_file(m_xslingload_apt_path);
+	write_apt_file.precision(9);
+	write_apt_file << "15 " << mp_cm_waypoint->latitude << " " << mp_cm_waypoint->longitude << " " << mp_cm_mission->m_lf_heading << " X-Hoist position" << std::endl;
+	write_apt_file.close();
+	
+
+
+}
+
 void HRM_PlugIn::MissionCreate()
 {
 	m_cm_creation_failed = true;
@@ -314,7 +346,7 @@ void HRM_PlugIn::MissionCreate()
 	}
 	else if (!m_sar_enable)	random_type++;
 
-	if ((m_sling_enable) && (random_type == 0))
+	if ((m_sling_enable) && (random_type == 3))
 	{
 		p_waypoint_vector = &m_sling_waypoints;
 		p_mission_vector = &m_sling_missions;
@@ -443,6 +475,10 @@ void HRM_PlugIn::MissionCreate()
 	// TODO: FSE Airports
 
 	CreateFlightPlan();
+	if (mp_cm_mission->IsSlingLoad() == true)
+	{
+		ConfigureXSlingload();
+	}
 
 	pHRM->m_mission_state = HRM::State_Plan_Flight;
 
@@ -496,16 +532,16 @@ void HRM_PlugIn::MissionStartFlight1()
 		m_mission_flight1_countdown +=	(2 * HRM::flight_time_up_down_hard) + 
 									(distance * HRM::flight_time_per_nm_hard) + 
 									(m_cm_estmimated_wp? HRM::flight_time_search_hard:0) + 
-									(mp_cm_mission->m_mission_type == HRM::type_sling?HRM::flight_time_sling_hard:0);
+									(mp_cm_mission->IsSlingLoad()?HRM::flight_time_sling_hard:0);
 	else if (m_difficutly == HRM::Normal) 
 		m_mission_flight1_countdown +=	(2 * HRM::flight_time_up_down_normal) +
 									(distance * HRM::flight_time_per_nm_normal) +
 									(m_cm_estmimated_wp ? HRM::flight_time_search_normal : 0) +
-									(mp_cm_mission->m_mission_type == HRM::type_sling ? HRM::flight_time_sling_normal : 0);
+									(mp_cm_mission->IsSlingLoad() ? HRM::flight_time_sling_normal : 0);
 	else m_mission_flight1_countdown +=	(2 * HRM::flight_time_up_down_easy) +
 									(distance * HRM::flight_time_per_nm_easy) +
 									(m_cm_estmimated_wp ? HRM::flight_time_search_easy : 0) +
-									(mp_cm_mission->m_mission_type == HRM::type_sling ? HRM::flight_time_sling_easy : 0);
+									(mp_cm_mission->IsSlingLoad() ? HRM::flight_time_sling_easy : 0);
 	if (m_adjust_payload==true)
 	{
 		XPLMSetDataf(m_f_payload, m_crew_weight + m_ems_equippment_weight);
@@ -525,16 +561,16 @@ void HRM_PlugIn::MissionStartFlight2()
 		m_mission_flight2_countdown =	(2 * HRM::flight_time_up_down_hard) +
 										(distance * HRM::flight_time_per_nm_hard) +
 										(m_cm_estmimated_wp ? HRM::flight_time_search_hard : 0) +
-										(mp_cm_mission->m_mission_type == HRM::type_sling ? HRM::flight_time_sling_hard : 0);
+										(mp_cm_mission->IsSlingLoad() ? HRM::flight_time_sling_hard : 0);
 	else if (m_difficutly == HRM::Normal)
 		m_mission_flight2_countdown =	(2 * HRM::flight_time_up_down_normal) +
 										(distance * HRM::flight_time_per_nm_normal) +
 										(m_cm_estmimated_wp ? HRM::flight_time_search_normal : 0) +
-										(mp_cm_mission->m_mission_type == HRM::type_sling ? HRM::flight_time_sling_normal : 0);
+										(mp_cm_mission->IsSlingLoad() ? HRM::flight_time_sling_normal : 0);
 	else m_mission_flight2_countdown =	(2 * HRM::flight_time_up_down_easy) +
 										(distance * HRM::flight_time_per_nm_easy) +
 										(m_cm_estmimated_wp ? HRM::flight_time_search_easy : 0) +
-										(mp_cm_mission->m_mission_type == HRM::type_sling ? HRM::flight_time_sling_easy : 0);
+										(mp_cm_mission->IsSlingLoad() ? HRM::flight_time_sling_easy : 0);
 
 	if (m_adjust_payload == true)
 	{
@@ -644,6 +680,9 @@ void HRM_PlugIn::MissionReset()
 	m_cm_no_waypoint_found = false;
 	m_cm_cancelling = false;
 	m_cm_not_on_ground = false;
+	m_xslingload_not_found = false;
+	m_xslingload_found = false;
+	m_xslingload_reload_position_file = false;
 
 	mp_cm_waypoint = NULL;
 	mp_cm_mission = NULL;
@@ -657,6 +696,8 @@ void HRM_PlugIn::MissionReset()
 	m_mission_points_difficulty = 0;
 	m_mission_points_search_range = 0;
 }
+
+
 
 void HRM_PlugIn::MissionCancel()
 {
@@ -1128,6 +1169,14 @@ void HRM_PlugIn::SaveConfig()
 	pt.put("HRM.pos_calc_rate_s", m_position_calc_rate);
 	pt.put("HRM.pickup_countdown_s", m_patient_countdown_value);
 	pt.put("HRM.hospital_delivery_countdown_s", m_hospital_countdown_value);
+
+	pt.put("HRM.xslingload_treshold", m_xslingload_treshold);
+	pt.put("HRM.xslingload_weight_empty", m_xslingload_weight_empty);
+	pt.put("HRM.xslingload_weight_full", m_xslingload_weight_full);
+	pt.put("HRM.xslingload_size_empty", m_xslingload_size_empty);
+	pt.put("HRM.xslingload_size_full", m_xslingload_size_full);
+	pt.put("HRM.xslingload_offset", m_xslingload_offset);
+	pt.put("HRM.xslingload_object_path", m_xslingload_object_path);
 	
 	boost::property_tree::ini_parser::write_ini(m_config_path + "HRM.ini", pt);
 }
@@ -1217,7 +1266,26 @@ void HRM_PlugIn::ReadConfig()
 	try { m_hospital_countdown_value = pt.get<float>("HRM.hospital_delivery_countdown_s"); }
 	catch (...) { HRMDebugString("Ini File: Entry not found."); }
 
+	try { m_xslingload_treshold = pt.get<float>("HRM.xslingload_treshold"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
 
+	try { m_xslingload_weight_empty = pt.get<float>("HRM.xslingload_weight_empty"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_xslingload_weight_full = pt.get<float>("HRM.xslingload_weight_full"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_xslingload_size_empty = pt.get<float>("HRM.xslingload_size_empty"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_xslingload_size_full = pt.get<float>("HRM.xslingload_size_full"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_xslingload_offset = pt.get<float>("HRM.xslingload_offset"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_xslingload_object_path = pt.get<std::string>("HRM.xslingload_object_path"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
 }
 
 void HRM_PlugIn::SaveMissions()
@@ -1320,7 +1388,7 @@ void HRM_PlugIn::ReadDataSlow()
 
 	m_li_battery_on = XPLMGetDatai(m_i_battery_on);
 
-	m_li_jett_is_slung = XPLMGetDatai(m_i_jett_is_slung);
+	m_lf_jett_weight = XPLMGetDataf(m_f_jett_weight);
 
 	XPLMGetDatavf(m_fa_prop_ratio, m_lfa_prop_ratio, 0, 1);
 }
@@ -1384,6 +1452,27 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			
 			if (m_mission_state == HRM::State_Create_Mission)
 			{
+				if ((m_sling_enable == true) && (m_xslingload_found == false))
+				{
+					std::ifstream check_file(m_xslingload_ini_path);
+
+					
+
+					if (check_file.good() == true)
+					{
+						m_xslingload_found = true;
+						m_xslingload_not_found = false;
+					}
+					else
+					{
+						m_sling_enable = false;
+						m_xslingload_not_found = true;
+					}
+					check_file.close();
+				}
+
+
+				// ICAO Computation
 				if (pHRM->m_cm_use_position == HRM::Scenairo_Aircraft)
 				{
 					m_mission_scenario_lat = m_ld_latitude;
@@ -1579,23 +1668,28 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 						m_mission_flight1_countdown = 0;
 						m_mission_time_failed = true;
 					}
-				}
-				else
-				{
-					// If within 100m and collective down or fse can finish
-					if (calc_distance_m(m_ld_latitude, m_ld_longitude, mp_cm_waypoint->latitude, mp_cm_waypoint->longitude) < HRM::pickup_max_distance)
+
+					if (mp_cm_mission->IsSlingLoad() == true)
 					{
-						// Sling load mission just needs to get hooked
-						if (mp_cm_mission->IsSlingLoad() == true)
+						if (calc_distance_m(m_ld_latitude, m_ld_longitude, mp_cm_waypoint->latitude, mp_cm_waypoint->longitude) < HRM::pickup_max_distance)
 						{
-							if ((m_li_jett_is_slung > 0) && (m_li_jett_is_slung_old == 0))
+							if ((m_lf_jett_weight > m_xslingload_treshold) && (m_lf_jett_weight_old < m_xslingload_treshold))
 							{
 								m_mission_at_patient_countdown = m_patient_countdown_value;
 								m_mission_state = HRM::State_At_Patient;
 							}
 						}
-						else
+
+					}
+				}
+				else
+				{
+					if (mp_cm_mission->IsSlingLoad() == false)
+					{
+						// If within 100m and collective down or fse can finish
+						if (calc_distance_m(m_ld_latitude, m_ld_longitude, mp_cm_waypoint->latitude, mp_cm_waypoint->longitude) < HRM::pickup_max_distance)
 						{
+
 
 
 							if ((m_cm_enable_fse == true) && (m_cm_autoconnect_fse == true) && ((FSECanFinish() == true) || (FSEIsFlying() == false)))
@@ -1610,10 +1704,11 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 								m_mission_at_patient_countdown = m_patient_countdown_value;
 								m_mission_state = HRM::State_At_Patient;
 							}
+
+
+
+
 						}
-
-
-						
 					}
 				}
 			}
@@ -1622,7 +1717,13 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 				// for sling load: acf_jett_is_slung
 				// create is_slingload for mission
 
-				if (m_li_on_ground == 1)
+				if (mp_cm_mission->IsSlingLoad() == true)
+				{
+					if (mp_cm_mission != NULL) mp_cm_mission->RemovePatients();
+					MissionStartFlight2();
+				}
+
+				else if (m_li_on_ground == 1)
 				{
 					m_mission_at_patient_countdown -= m_time_delta;
 					if (m_mission_at_patient_countdown <= 0)
@@ -1661,15 +1762,16 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 					// If within 100m and collective down
 					if (calc_distance_m(m_ld_latitude, m_ld_longitude, m_mission_hospital_lat, m_mission_hospital_long) < HRM::hospital_max_distance)
 					{
-
+						// Deactivated because x-slingload lets you pick up stuff
 						// dropping sling load at hospital automatically finished mission
-						if ((mp_cm_mission->IsSlingLoad() == true) &&(m_li_jett_is_slung == 0) && (m_li_jett_is_slung_old > 0))
+						/*if ((mp_cm_mission->IsSlingLoad() == true) &&(m_li_jett_is_slung == 0) && (m_li_jett_is_slung_old > 0))
 						{
 							MissionFinish();
 						}
-
+						else */
 						// FSE Autoconnect
-						else if ((m_cm_enable_fse == true) && (m_cm_autoconnect_fse == true) && ((FSECanFinish() == true) || (FSEIsFlying() == false)))
+						//
+						if ((m_cm_enable_fse == true) && (m_cm_autoconnect_fse == true) && ((FSECanFinish() == true) || (FSEIsFlying() == false)))
 						{
 							FSEFinishFlight();
 
@@ -1678,7 +1780,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 						}
 
 						// Normal Mode
-						else if ((m_lfa_prop_ratio[0] < m_cm_collective_min) && (m_cm_autoconnect_fse == false))
+						else if ((m_lfa_prop_ratio[0] < m_cm_collective_min) && ((m_cm_autoconnect_fse == false) || (m_cm_enable_fse == false)))
 						{
 
 							m_mission_at_hospital_countdown = m_hospital_countdown_value;
@@ -1716,7 +1818,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 
 			// End of Slow Computations
 
-			m_li_jett_is_slung_old = m_li_jett_is_slung;
+			m_lf_jett_weight_old = m_lf_jett_weight;
 
 
 			m_time_delta = 0;
