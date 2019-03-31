@@ -260,7 +260,7 @@ void HRM_PlugIn::PluginMenuHandler(void * in_menu_ref, void * inItemRef)
 
 void HRM_PlugIn::ConfigureXSlingload()
 {
-	std::ifstream read_ini_file(m_xslingload_ini_path);
+	/*std::ifstream read_ini_file(m_xslingload_ini_path);
 	std::string line_string;
 	std::vector<std::string> ini_lines;
 
@@ -274,16 +274,16 @@ void HRM_PlugIn::ConfigureXSlingload()
 	for (int index = 1; index < ini_lines.size(); index++)
 		write_ini_file << ini_lines[index] << std::endl;
 
-	write_ini_file.close();
+	write_ini_file.close();*/
 
-	m_xslingload_reload_position_file = true;
+	
 
 	std::ofstream write_apt_file(m_xslingload_apt_path);
 	write_apt_file.precision(9);
 	write_apt_file << "15 " << mp_cm_waypoint->latitude << " " << mp_cm_waypoint->longitude << " " << mp_cm_mission->m_lf_heading << " X-Hoist position" << std::endl;
 	write_apt_file.close();
 	
-
+	m_xslingload_reload_position_file = true;
 
 }
 

@@ -264,8 +264,7 @@ void HRMImguiWidget::buildInterface()
 
 			ImGui::PushStyleColor(ImGuiCol_Text, color_yellow);
 			ImGui::TextWrapped("IMPORTANT:");
-			ImGui::TextWrapped("You need to manually re-initialize X-Slingload Position File");
-			ImGui::TextWrapped("Otherwise X-Slingload does get the new positioning");
+			ImGui::TextWrapped("You need to manually re-initialize X-Slingload Position File. Do this as close to the rescue scene as possible.");
 			ImGui::TextWrapped("Plugins->X-Hoist->Init Sling Loading");
 			ImGui::PopStyleColor();
 
