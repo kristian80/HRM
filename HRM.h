@@ -164,15 +164,15 @@ namespace HRM
 	const float threshold_gv_neg_med = 0;
 	const float threshold_gv_neg_high = 0;
 
-	const int points_difficulty = 20;
+	const int points_difficulty = 10;
 	const int points_speed_flight1 = 20;
 	const int points_speed_flight2 = 20;
-	const int points_g_flight2 = 30;
+	const int points_g_flight2 = 40;
 	const int points_search_range = 10;
 
 	const int points_easy = 0;
-	const int points_normal = 10;
-	const int points_hard = 20;
+	const int points_normal = 5;
+	const int points_hard = 10;
 
 	const float eval_g_total_factor = 10;
 

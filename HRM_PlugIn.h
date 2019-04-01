@@ -307,6 +307,7 @@ public:
 
 	void ConfigureXSlingload();
 	void MissionCreate();
+	bool FindWaypoint(std::vector<HRM_Waypoint *> *p_waypoint_vector, std::vector<HRM_Waypoint *> &considered_waypoints);
 	void MissionStart();
 	void MissionStartFlight1();
 	void MissionStartFlight2();

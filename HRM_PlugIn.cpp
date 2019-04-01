@@ -289,6 +289,8 @@ void HRM_PlugIn::ConfigureXSlingload()
 
 void HRM_PlugIn::MissionCreate()
 {
+	bool suitable_waypoint_found = false;
+
 	m_cm_creation_failed = true;
 	m_cm_no_waypoint_found = false;
 
@@ -308,66 +310,147 @@ void HRM_PlugIn::MissionCreate()
 	// Get the random mission type and the corresponding waypoint vector. Bit more complicated since some might not be enabled
 
 	int type_count = 0;
-
-	if (m_street_enable) type_count++;
-	if (m_urban_enable) type_count++;
-	if (m_sar_enable) type_count++;
-	if (m_sling_enable) type_count++;
-
-	if (type_count == 0)
-	{
-		m_cm_no_waypoint_found = true;
-		return;
-	}
-
-	int random_type = rand() % type_count;
-
+	std::vector<HRM_Waypoint *> considered_waypoints;
 	std::vector<HRM_Waypoint *> *p_waypoint_vector = NULL;
 	std::vector<HRM_Mission *> *p_mission_vector = NULL;
 
-	if ((m_street_enable) && (random_type == 0))
-	{
-		p_waypoint_vector = &m_street_waypoints;
-		p_mission_vector = &m_street_missions;
-	}
-	else if (!m_street_enable)	random_type++;
+	bool disable_type = false;
+	int random_type = 0;
 
-	if ((m_urban_enable) && (random_type == 1))
+	while ((suitable_waypoint_found == false) && (m_street_enable || m_urban_enable || m_sar_enable || m_sling_enable))
 	{
-		p_waypoint_vector = &m_urban_waypoints;
-		p_mission_vector = &m_urban_missions;
-	}
-	else if (!m_urban_enable)	random_type++;
+		if (disable_type == true) 
+		{
+			if (random_type == 0) m_street_enable = false;
+			if (random_type == 1) m_urban_enable = false;
+			if (random_type == 2) m_sar_enable = false;
+			if (random_type == 3) m_sling_enable = false;
+		}
 
-	if ((m_sar_enable) && (random_type == 2))
-	{
-		p_waypoint_vector = &m_sar_waypoints;
-		p_mission_vector = &m_sar_missions;
-	}
-	else if (!m_sar_enable)	random_type++;
+		type_count = 0;
+		disable_type = true;
 
-	if ((m_sling_enable) && (random_type == 3))
-	{
-		p_waypoint_vector = &m_sling_waypoints;
-		p_mission_vector = &m_sling_missions;
-	}
-	else if (!m_sling_enable)	random_type++;
+		if (m_street_enable) type_count++;
+		if (m_urban_enable) type_count++;
+		if (m_sar_enable) type_count++;
+		if (m_sling_enable) type_count++;
+
+		if (type_count == 0)
+		{
+			m_cm_no_waypoint_found = true;
+			return;
+		}
+
+		random_type = rand() % type_count;
+
+		p_waypoint_vector = NULL;
+		p_mission_vector = NULL;
+
 		
-	if ((p_waypoint_vector == NULL) || (p_mission_vector == NULL))
+		if (p_waypoint_vector == NULL)
+		{
+			if ((m_street_enable) && (random_type == 0))
+			{
+				p_waypoint_vector = &m_street_waypoints;
+				p_mission_vector = &m_street_missions;
+			}
+			else if (!m_street_enable)	random_type++;
+		}
+
+		if (p_waypoint_vector == NULL)
+		{
+			if ((m_urban_enable) && (random_type == 1))
+			{
+				p_waypoint_vector = &m_urban_waypoints;
+				p_mission_vector = &m_urban_missions;
+			}
+			else if (!m_urban_enable)	random_type++;
+		}
+
+		if (p_waypoint_vector == NULL)
+		{
+			if ((m_sar_enable) && (random_type == 2))
+			{
+				p_waypoint_vector = &m_sar_waypoints;
+				p_mission_vector = &m_sar_missions;
+			}
+			else if (!m_sar_enable)	random_type++;
+		}
+
+		if (p_waypoint_vector == NULL)
+		{
+			if ((m_sling_enable) && (random_type == 3))
+			{
+				p_waypoint_vector = &m_sling_waypoints;
+				p_mission_vector = &m_sling_missions;
+			}
+			else if (!m_sling_enable)	random_type++;
+		}
+
+		if ((p_waypoint_vector == NULL) || (p_mission_vector == NULL)) continue;
+		if ((p_waypoint_vector->size() == 0) || (p_mission_vector->size() == 0)) continue;
+
+
+		
+		considered_waypoints.clear();
+		FindWaypoint(p_waypoint_vector, considered_waypoints);
+
+
+		// When no Waypoint in Range, Set Error and Return
+		if (considered_waypoints.size() > 0) suitable_waypoint_found = true;
+
+	}
+
+	if (suitable_waypoint_found == false)
 	{
 		m_cm_no_waypoint_found = true;
 		return;
 	}
 
-	if ((p_waypoint_vector->size() == 0) || (p_mission_vector->size() == 0))
+	// Find Random Mission and Waypoint
+
+	int random_waypoint = rand() % considered_waypoints.size();
+	int random_mission = rand() % p_mission_vector->size();
+
+	mp_cm_waypoint = considered_waypoints.at(random_waypoint);
+	mp_cm_mission = p_mission_vector->at(random_mission);
+
+	// Calculate the heading of the waypoint
+
+	double meter_latitude = 0;
+	double meter_longitude = 0;
+
+	HRM_Object::GetDegreesPerMeter(mp_cm_waypoint->latitude, mp_cm_waypoint->longitude, meter_latitude, meter_longitude);
+
+	double waypoint_meter_lat = (mp_cm_waypoint->lat_heading - mp_cm_waypoint->latitude) / meter_latitude;
+	double waypoint_meter_long = (mp_cm_waypoint->long_heading - mp_cm_waypoint->longitude) / meter_longitude;
+
+	double heading = atan2(waypoint_meter_long, waypoint_meter_lat) * 180 / M_PI;
+
+	mp_cm_mission->SetPosition(mp_cm_waypoint->latitude, mp_cm_waypoint->longitude, heading);
+	mp_cm_mission->DrawMission();
+
+	// TODO: Remove all Waypoints outside range!!!!
+	// TODO: FSE Airports
+
+	CreateFlightPlan();
+	if (mp_cm_mission->IsSlingLoad() == true)
 	{
-		m_cm_no_waypoint_found = true;
-		return;
+		ConfigureXSlingload();
 	}
 
-	std::vector<HRM_Waypoint *> considered_waypoints;
+	pHRM->m_mission_state = HRM::State_Plan_Flight;
 
-	
+	m_cm_creation_failed = false;
+	m_cm_no_waypoint_found = false;
+}
+
+bool HRM_PlugIn::FindWaypoint(std::vector<HRM_Waypoint*>* p_waypoint_vector, std::vector<HRM_Waypoint*>& considered_waypoints)
+{
+	bool waypoint_found = false;
+
+
+
 	// Check for all waypoints that are within the set distance 
 
 	if (m_cm_enable_fse == false)
@@ -441,49 +524,8 @@ void HRM_PlugIn::MissionCreate()
 
 	}
 
-	// When no Waypoint in Range, Set Error and Return
-	if (considered_waypoints.size() == 0)
-	{
-		m_cm_no_waypoint_found = true;
-		return;
-	}
 
-	// Find Random Mission and Waypoint
-
-	int random_waypoint = rand() % considered_waypoints.size();
-	int random_mission = rand() % p_mission_vector->size();
-
-	mp_cm_waypoint = considered_waypoints.at(random_waypoint);
-	mp_cm_mission = p_mission_vector->at(random_mission);
-
-	// Calculate the heading of the waypoint
-
-	double meter_latitude = 0;
-	double meter_longitude = 0;
-
-	HRM_Object::GetDegreesPerMeter(mp_cm_waypoint->latitude, mp_cm_waypoint->longitude, meter_latitude, meter_longitude);
-
-	double waypoint_meter_lat = (mp_cm_waypoint->lat_heading - mp_cm_waypoint->latitude) / meter_latitude;
-	double waypoint_meter_long = (mp_cm_waypoint->long_heading - mp_cm_waypoint->longitude) / meter_longitude;
-
-	double heading = atan2(waypoint_meter_long, waypoint_meter_lat) * 180 / M_PI;
-
-	mp_cm_mission->SetPosition(mp_cm_waypoint->latitude, mp_cm_waypoint->longitude, heading);
-	mp_cm_mission->DrawMission();
-
-	// TODO: Remove all Waypoints outside range!!!!
-	// TODO: FSE Airports
-
-	CreateFlightPlan();
-	if (mp_cm_mission->IsSlingLoad() == true)
-	{
-		ConfigureXSlingload();
-	}
-
-	pHRM->m_mission_state = HRM::State_Plan_Flight;
-
-	m_cm_creation_failed = false;
-	m_cm_no_waypoint_found = false;
+	return waypoint_found;
 }
 
 void HRM_PlugIn::MissionStart()
