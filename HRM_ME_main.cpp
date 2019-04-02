@@ -75,6 +75,9 @@ PLUGIN_API int XPluginStart(char * name, char * sig, char * desc)
 		return 0;
 	}
 
+	// Use Native Paths
+	XPLMEnableFeature("XPLM_USE_NATIVE_PATHS", 1);
+
 	// Do deferred sound initialization. See http://www.xsquawkbox.net/xpsdk/mediawiki/DeferredInitialization
 	// for more info.
 	XPLMRegisterFlightLoopCallback(InitPlugin, -1.0, NULL);

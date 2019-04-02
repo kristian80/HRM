@@ -74,24 +74,41 @@ void HRM_Object::SetPosition(double zero_latitude, double zero_longitude, double
 
 	double zero_x, zero_y, zero_z;
 	XPLMWorldToLocal(m_latitude, m_longitude, 0, &zero_x, &zero_y, &zero_z);
+	double local_x=0, local_y=0, local_z=0;
 
+	local_x = zero_x;
+	local_z = zero_z;
 	
 
 	XPLMProbeInfo_t info;
 	info.structSize = sizeof(info);
 
 	XPLMProbeResult result = XPLMProbeTerrainXYZ(m_probe, zero_x, zero_y, zero_z, &info);
-	result = XPLMProbeTerrainXYZ(m_probe, zero_x, zero_y, info.locationZ, &info);  // Twice for improved precision
+	//result = XPLMProbeTerrainXYZ(m_probe, zero_x, info.locationY, zero_z, &info);  // Twice for improved precision
 	
 	double local_long;
 	double local_lat;
 	double local_alt;
+
+	//zero_x = info.locationX;
+	//local_y = info.locationY + m_elevation;
+	//zero_z = info.locationZ;
+
 
 	XPLMLocalToWorld(info.locationX, info.locationY, info.locationZ, &local_lat, &local_long, &local_alt);
 	
 	//XPLMWorldToLocal(local_lat, local_long, local_alt + m_elevation, &zero_x, &zero_y, &zero_z); // incorporate elevation
 
 	XPLMWorldToLocal(m_latitude, m_longitude, local_alt + m_elevation, &zero_x, &zero_y, &zero_z); // incorporate elevation
+
+	local_x = zero_x;
+	local_z = zero_z;
+
+	XPLMProbeTerrainXYZ(m_probe, zero_x, zero_y, zero_z, &info); // Once again for improved precision
+
+	
+
+	local_y = info.locationY + m_elevation;
 
 
 
@@ -109,9 +126,9 @@ void HRM_Object::SetPosition(double zero_latitude, double zero_longitude, double
 
 		XPLMDrawInfo_t		dr;
 		dr.structSize = sizeof(dr);
-		dr.x = zero_x;
-		dr.y = zero_y;
-		dr.z = zero_z;
+		dr.x = local_x;
+		dr.y = local_y;
+		dr.z = local_z;
 		dr.pitch = total_pitch;
 		dr.heading = total_heading;
 		dr.roll = total_roll;
