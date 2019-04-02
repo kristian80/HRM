@@ -1741,7 +1741,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 								m_mission_at_patient_countdown = m_patient_countdown_value;
 								m_mission_state = HRM::State_At_Patient;
 							}
-							else if ((m_lfa_prop_ratio[0] < m_cm_collective_min) && (m_cm_autoconnect_fse == false))
+							else if ((m_lfa_prop_ratio[0] < m_cm_collective_min) && ((m_cm_autoconnect_fse == false) || (m_cm_enable_fse == false)))
 							{
 								m_mission_at_patient_countdown = m_patient_countdown_value;
 								m_mission_state = HRM::State_At_Patient;
