@@ -75,7 +75,7 @@ void HRM_PlugIn::PluginStart()
 	// Menu;
 	m_PluginMenu = XPLMAppendMenuItem(XPLMFindPluginsMenu(), "HRM", 0, 1);
 	m_PluginMenuID = XPLMCreateMenu("HRM", XPLMFindPluginsMenu(), m_PluginMenu, WrapMenuHandler, 0);
-	XPLMAppendMenuItem(m_PluginMenuID, "Toggle Control Window", "Item1", 1);
+	XPLMAppendMenuItem(m_PluginMenuID, "Toggle Control Window", (void *) "Item1", 1);
 
 	int left, top, right, bot;
 	XPLMGetScreenBoundsGlobal(&left, &top, &right, &bot);
