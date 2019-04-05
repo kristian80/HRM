@@ -1,4 +1,5 @@
 #pragma once
+#define NOMINMAX
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -16,6 +17,7 @@
 #include <ctime>
 #include <iomanip>
 #include <set>
+#include <algorithm>
 
 #include "XPLMDefs.h"
 #include "XPLMProcessing.h"

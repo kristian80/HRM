@@ -656,8 +656,8 @@ void HRM_PlugIn::MissionFinish()
 	// If the Mission Time failed, you do not get any points
 	if (m_mission_time_failed == false)
 	{
-		m_mission_points_flight1 = min(((float) m_mission_flight1_avg_speed) / HRM::eval_flight1_nominal_speed, 1.f) * ((float) HRM::points_speed_flight1);
-		m_mission_points_flight2 = min(((float)m_mission_flight2_avg_speed) / HRM::eval_flight2_nominal_speed, 1.f) * ((float)HRM::points_speed_flight2);
+		m_mission_points_flight1 = std::min(((float) m_mission_flight1_avg_speed) / HRM::eval_flight1_nominal_speed, 1.f) * ((float) HRM::points_speed_flight1);
+		m_mission_points_flight2 = std::min(((float)m_mission_flight2_avg_speed) / HRM::eval_flight2_nominal_speed, 1.f) * ((float)HRM::points_speed_flight2);
 
 		m_mission_points_g_force = ((float)HRM::points_g_flight2) / (1.f + (g_force_seconds/ HRM::eval_g_total_factor));
 
