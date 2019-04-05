@@ -18,7 +18,8 @@ CXXFLAGS = -std=c++17 -m64 -w -pipe -Wall -Wextra -Wshadow -Wfloat-equal -pedant
 -DLIN=1 \
 #-DAPL=0 \
 
-LDLIBS = -L../boost_1_69_0/libs
+LDLIBS = -L../boost_1_69_0/libs 
+LINUXLINKER = -shared -rdynamic -nodefaultlibs -undefined_warning
 
 
 OBJ = HRM_ME_main.o HRM_Object.o HRM_Mission.o HRM_PlugIn.o HRMImguiWidget.o ./xsb_public_changes/ImgWindow.o ../imgui/imgui_draw.o ../imgui/imgui_widgets.o ../imgui/imgui.o ../imgui/misc/cpp/imgui_stdlib.o 
@@ -27,4 +28,4 @@ OBJ = HRM_ME_main.o HRM_Object.o HRM_Mission.o HRM_PlugIn.o HRMImguiWidget.o ./x
 	$(CXX) -c -o $@ $< $(CXXFLAGS)
 
 lin.xpl: $(OBJ)
-	$(CXX) -o $@ $^ $(LDLIBS)
+	$(CXX) -o $@ $^ $(LDLIBS) $(LINUXLINKER)
