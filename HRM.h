@@ -50,8 +50,8 @@
 #endif
 
 // Your include paths for OpenAL may vary by platform.
-#include "al.h"
-#include "alc.h"
+//#include "al.h"
+//#include "alc.h"
 
 
 
