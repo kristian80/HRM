@@ -10,7 +10,7 @@
 
 // OS X: we use this to convert our file path.
 #if APL
-#include <Carbon/Carbon.h>
+//#include <Carbon/Carbon.h>
 #endif
 
 
@@ -25,7 +25,7 @@ HRM_PlugIn * pHRM;
 std::ofstream hrm_output_file;
 
 
-
+/*
 // Mac specific: this converts file paths from HFS (which we get from the SDK) to Unix (which the OS wants).
 // See this for more info:
 //
@@ -46,7 +46,7 @@ int ConvertPath(const char * inPath, char * outPath, int outPathMaxLen) {
 	CFRelease(inStr);
 	return 0;
 }
-#endif
+#endif*/
 
 // Initialization code.
 
