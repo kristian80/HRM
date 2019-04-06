@@ -1,0 +1,3 @@
+g++ -c -m32 -pipe -Wall -Wextra -Wshadow -Wfloat-equal -pedantic -fvisibility=hidden -O2 -fmessage-length=0 -D_FORTIFY_SOURCE=2 -fstack-protector -funwind-tables -fasynchronous-unwind-tables -W -fPIC -DXPLM200 -DAPL=0 -DIBM=0 -DLIN=1 -I../SDK/CHeaders/XPLM -I../SDK/CHeaders/Widgets -I../SDK/CHeaders/Wrappers -I../imgui -I../imgui4xp/src -I../xsb_public -I/usr/local/include -I../boost_1_69_0 -o HRM_ME_main.o HRM_ME_main.cpp
+
+#g++ -m32 -Wl,-O1 -shared -L../../SDK/Libraries/ -o lin.xpl HRM_ME_main.cpp
