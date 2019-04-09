@@ -25,7 +25,7 @@ HRM_PlugIn::~HRM_PlugIn()
 
 std::string HRM_PlugIn::CreateTimeString(float time_float)
 {
-	int time_int = time_float;
+	int time_int = (int) time_float;
 
 	int seconds = time_int % 60;
 	time_int -= seconds;
@@ -70,7 +70,7 @@ void HRM_PlugIn::PluginStart()
 
 	
 
-	XPLMRegisterFlightLoopCallback(WrapFlightLoopCallback, 0.1, 0);
+	XPLMRegisterFlightLoopCallback(WrapFlightLoopCallback, 0.1f, 0);
 
 	// Menu;
 	m_PluginMenu = XPLMAppendMenuItem(XPLMFindPluginsMenu(), "HRM", 0, 1);
@@ -144,10 +144,10 @@ void HRM_PlugIn::PluginStart()
 
 	ReadMissions();
 
-	ReadWaypoints(m_street_waypoints, "street");
-	ReadWaypoints(m_urban_waypoints, "urban");
-	ReadWaypoints(m_sar_waypoints, "sar");
-	ReadWaypoints(m_sling_waypoints, "sling");
+	ReadCustomWaypoints(m_street_waypoints, "street");
+	ReadCustomWaypoints(m_urban_waypoints, "urban");
+	ReadCustomWaypoints(m_sar_waypoints, "sar");
+	ReadCustomWaypoints(m_sling_waypoints, "sling");
 
 	ReadFSEAirports();
 	ReadCustomICAOs();
@@ -314,6 +314,10 @@ void HRM_PlugIn::MissionCreate()
 	std::vector<HRM_Waypoint *> *p_waypoint_vector = NULL;
 	std::vector<HRM_Mission *> *p_mission_vector = NULL;
 
+	std::vector<HRM_Waypoint *> global_waypoints;
+
+	//std::vector
+
 	bool disable_type = false;
 	int random_type = 0;
 
@@ -326,6 +330,12 @@ void HRM_PlugIn::MissionCreate()
 			if (random_type == 2) m_sar_enable = false;
 			if (random_type == 3) m_sling_enable = false;
 		}
+
+		for (auto p_wp : global_waypoints)
+		{
+			delete p_wp;
+		}
+		global_waypoints.clear();
 
 		type_count = 0;
 		disable_type = true;
@@ -351,6 +361,8 @@ void HRM_PlugIn::MissionCreate()
 		{
 			if ((m_street_enable) && (random_type == 0))
 			{
+				ReadGlobalWaypoints(global_waypoints, "street");
+
 				p_waypoint_vector = &m_street_waypoints;
 				p_mission_vector = &m_street_missions;
 			}
@@ -361,6 +373,8 @@ void HRM_PlugIn::MissionCreate()
 		{
 			if ((m_urban_enable) && (random_type == 1))
 			{
+				ReadGlobalWaypoints(global_waypoints, "urban");
+
 				p_waypoint_vector = &m_urban_waypoints;
 				p_mission_vector = &m_urban_missions;
 			}
@@ -371,6 +385,7 @@ void HRM_PlugIn::MissionCreate()
 		{
 			if ((m_sar_enable) && (random_type == 2))
 			{
+
 				p_waypoint_vector = &m_sar_waypoints;
 				p_mission_vector = &m_sar_missions;
 			}
@@ -388,13 +403,14 @@ void HRM_PlugIn::MissionCreate()
 		}
 
 		if ((p_waypoint_vector == NULL) || (p_mission_vector == NULL)) continue;
-		if ((p_waypoint_vector->size() == 0) || (p_mission_vector->size() == 0)) continue;
+		if (((global_waypoints.size() == 0) && (p_waypoint_vector->size() == 0)) || (p_mission_vector->size() == 0)) continue;
 
 
 		
 		considered_waypoints.clear();
-		FindWaypoint(p_waypoint_vector, considered_waypoints);
+		FindWaypoint(p_waypoint_vector, global_waypoints, considered_waypoints);
 
+		
 
 		// When no Waypoint in Range, Set Error and Return
 		if (considered_waypoints.size() > 0) suitable_waypoint_found = true;
@@ -414,6 +430,11 @@ void HRM_PlugIn::MissionCreate()
 
 	mp_cm_waypoint = considered_waypoints.at(random_waypoint);
 	mp_cm_mission = p_mission_vector->at(random_mission);
+
+	for (auto p_wp : global_waypoints)
+	{
+		if (p_wp != mp_cm_waypoint)  delete p_wp;
+	}
 
 	// Calculate the heading of the waypoint
 
@@ -445,9 +466,15 @@ void HRM_PlugIn::MissionCreate()
 	m_cm_no_waypoint_found = false;
 }
 
-bool HRM_PlugIn::FindWaypoint(std::vector<HRM_Waypoint*>* p_waypoint_vector, std::vector<HRM_Waypoint*>& considered_waypoints)
+bool HRM_PlugIn::FindWaypoint(std::vector<HRM_Waypoint*>* p_waypoint_vector, std::vector<HRM_Waypoint*> &global_waypoint_vector,  std::vector<HRM_Waypoint*>& considered_waypoints)
 {
 	bool waypoint_found = false;
+
+	std::vector<HRM_Waypoint*> all_waypoints;
+
+	for (auto p_wp : *p_waypoint_vector) all_waypoints.push_back(p_wp);
+	for (auto p_wp : global_waypoint_vector) all_waypoints.push_back(p_wp);
+
 
 
 
@@ -456,7 +483,7 @@ bool HRM_PlugIn::FindWaypoint(std::vector<HRM_Waypoint*>* p_waypoint_vector, std
 	if (m_cm_enable_fse == false)
 	{
 		// MIN-MAX Distance 
-		for (auto p_waypoint : *p_waypoint_vector)
+		for (auto p_waypoint : all_waypoints)
 		{
 			double distance = abs(calc_distance_nm(m_mission_scenario_lat, m_mission_scenario_long, p_waypoint->latitude, p_waypoint->longitude));
 
@@ -485,7 +512,7 @@ bool HRM_PlugIn::FindWaypoint(std::vector<HRM_Waypoint*>* p_waypoint_vector, std
 		// Reduce number of waypoints to compute
 		std::vector<HRM_Waypoint *> reduced_waypoints;
 		// MIN-MAX Distance 
-		for (auto p_waypoint : *p_waypoint_vector)
+		for (auto p_waypoint : all_waypoints)
 		{
 			double distance = abs(calc_distance_nm(m_mission_scenario_lat, m_mission_scenario_long, p_waypoint->latitude, p_waypoint->longitude));
 
@@ -564,7 +591,7 @@ void HRM_PlugIn::MissionStart()
 
 void HRM_PlugIn::MissionStartFlight1()
 {
-	double distance = abs(calc_distance_nm(m_ld_latitude, m_ld_longitude, mp_cm_waypoint->latitude, mp_cm_waypoint->longitude));
+	float distance = abs(calc_distance_nm(m_ld_latitude, m_ld_longitude, mp_cm_waypoint->latitude, mp_cm_waypoint->longitude));
 
 	m_mission_flight1_distance = distance;
 	
@@ -595,7 +622,7 @@ void HRM_PlugIn::MissionStartFlight1()
 void HRM_PlugIn::MissionStartFlight2()
 {
 
-	double distance = abs(calc_distance_nm(m_ld_latitude, m_ld_longitude, m_mission_hospital_lat, m_mission_hospital_long));
+	float distance = abs(calc_distance_nm(m_ld_latitude, m_ld_longitude, m_mission_hospital_lat, m_mission_hospital_long));
 
 	m_mission_flight2_distance = distance;
 
@@ -1085,97 +1112,129 @@ void HRM_PlugIn::ReadFSEAirports()
 	}
 }
 
-void HRM_PlugIn::ReadWaypoints(std::vector<HRM_Waypoint*>& waypoint_vector, std::string file_name)
+void HRM_PlugIn::ReadCustomWaypoints(std::vector<HRM_Waypoint*>& waypoint_vector, std::string file_name)
 {
 	for (int scenery_number = 1; scenery_number <= HRM::max_scenery; scenery_number++)
 	{
-		try
-		{
-			std::ifstream waypoint_file(m_config_path + file_name + "_" + std::to_string(scenery_number) + ".fms");
-			std::string line_string;
-
-			bool odd_waypoint = true;
-			HRM_Waypoint *p_waypoint = new HRM_Waypoint();
-
-			double lat_correct = 0;
-			double long_correct = 0;
-			
-
-
-			while (std::getline(waypoint_file, line_string))
-			{
-				std::stringstream line_stream(line_string);
-
-				std::string dummy_string;
-				double dummy_double;
-				
-				int line_code = 0;
-				line_stream >> line_code;
-
-				// This is my custom code to correct x-plane deviation of this specific area
-				if ((line_stream) && (line_code == 12345))
-				{
-					line_stream >> lat_correct;
-					line_stream >> long_correct;
-				}
-
-				if ((line_stream) && (line_code == 28))
-				{
-					line_stream >> dummy_string; // Waypoint Name
-					line_stream >> dummy_string; // Waypoint Special
-					line_stream >> dummy_double; // Waypoint Altitude
-
-					double way_lat = HRM::coord_invalid;
-					double way_long = HRM::coord_invalid;
-
-					line_stream >> way_lat;
-					line_stream >> way_long;
-
-					if ((way_lat != HRM::coord_invalid) && (way_lat != HRM::coord_invalid))
-					{
-						// Offset Correction
-
-						double meter_latitude = 0;
-						double meter_longitude = 0;
-
-						HRM_Object::GetDegreesPerMeter(way_lat, way_long, meter_latitude, meter_longitude);
-
-						// Position Waypoint
-						if (odd_waypoint == true)
-						{
-							p_waypoint->latitude = way_lat + (meter_latitude * lat_correct);
-							p_waypoint->longitude = way_long + (meter_longitude * long_correct);
-
-							odd_waypoint = false;
-						}
-						// Direction Waypoint
-						else
-						{
-							p_waypoint->lat_heading = way_lat + (meter_latitude * lat_correct);
-							p_waypoint->long_heading = way_long + (meter_longitude * long_correct);
-
-							waypoint_vector.push_back(p_waypoint);
-
-							p_waypoint = new HRM_Waypoint();
-							odd_waypoint = true;
-
-						}
-					}
-				}
-
-				
-			}
-
-			delete p_waypoint;
-
-		}
-		catch (...)
-		{
-
-		}
+		ReadWaypointFile(waypoint_vector, m_config_path + file_name + "_" + std::to_string(scenery_number) + ".fms");
 
 	}
 
+}
+
+void HRM_PlugIn::ReadGlobalWaypoints(std::vector<HRM_Waypoint*>& waypoint_vector,  std::string file_name)
+{
+	int latitude = (int)m_ld_latitude;
+	int longitude = (int)m_ld_longitude;
+
+	for (int lat_index = latitude - 4; lat_index < (latitude + 4); lat_index++)
+	{
+		for (int long_index = longitude - 4; long_index < (longitude + 4); long_index++)
+		{
+			std::string waypoint_filename = file_name + "_";
+
+			waypoint_filename += lat_index < 0 ? "-" : "+";
+			if ((lat_index < 10) && (lat_index > -10)) waypoint_filename += "0";
+			waypoint_filename += std::to_string(abs(lat_index));
+
+			waypoint_filename += long_index < 0 ? "-" : "+";
+			if ((long_index < 100) && (long_index > -100)) waypoint_filename += "0";
+			if ((long_index < 10) && (long_index > -10)) waypoint_filename += "0";
+			waypoint_filename += std::to_string(abs(long_index));
+
+			ReadWaypointFile(waypoint_vector, m_config_path + "global_waypoints" + m_ds + waypoint_filename + ".fms");
+		}
+	}
+
+}
+
+
+void HRM_PlugIn::ReadWaypointFile(std::vector<HRM_Waypoint*>& waypoint_vector, std::string file_name)
+{
+	try
+	{
+		std::ifstream waypoint_file(file_name);
+		std::string line_string;
+
+		bool odd_waypoint = true;
+		HRM_Waypoint *p_waypoint = new HRM_Waypoint();
+
+		double lat_correct = 0;
+		double long_correct = 0;
+
+
+
+		while (std::getline(waypoint_file, line_string))
+		{
+			std::stringstream line_stream(line_string);
+
+			std::string dummy_string;
+			double dummy_double;
+
+			int line_code = 0;
+			line_stream >> line_code;
+
+			// This is my custom code to correct x-plane deviation of this specific area
+			if ((line_stream) && (line_code == 12345))
+			{
+				line_stream >> lat_correct;
+				line_stream >> long_correct;
+			}
+
+			if ((line_stream) && (line_code == 28))
+			{
+				line_stream >> dummy_string; // Waypoint Name
+				line_stream >> dummy_string; // Waypoint Special
+				line_stream >> dummy_double; // Waypoint Altitude
+
+				double way_lat = HRM::coord_invalid;
+				double way_long = HRM::coord_invalid;
+
+				line_stream >> way_lat;
+				line_stream >> way_long;
+
+				if ((way_lat != HRM::coord_invalid) && (way_lat != HRM::coord_invalid))
+				{
+					// Offset Correction
+
+					double meter_latitude = 0;
+					double meter_longitude = 0;
+
+					HRM_Object::GetDegreesPerMeter(way_lat, way_long, meter_latitude, meter_longitude);
+
+					// Position Waypoint
+					if (odd_waypoint == true)
+					{
+						p_waypoint->latitude = way_lat + (meter_latitude * lat_correct);
+						p_waypoint->longitude = way_long + (meter_longitude * long_correct);
+
+						odd_waypoint = false;
+					}
+					// Direction Waypoint
+					else
+					{
+						p_waypoint->lat_heading = way_lat + (meter_latitude * lat_correct);
+						p_waypoint->long_heading = way_long + (meter_longitude * long_correct);
+
+						waypoint_vector.push_back(p_waypoint);
+
+						p_waypoint = new HRM_Waypoint();
+						odd_waypoint = true;
+
+					}
+				}
+			}
+
+
+		}
+
+		delete p_waypoint;
+
+	}
+	catch (...)
+	{
+
+	}
 }
 
 void HRM_PlugIn::SaveConfig()
@@ -1547,7 +1606,13 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 								if (nav_scenario != XPLM_NAV_NOT_FOUND)
 								{
 									char buffer[2048];
-									XPLMGetNavAidInfo(nav_scenario, &nav_type_scenario, &m_mission_scenario_lat, &m_mission_scenario_long, NULL, NULL, NULL, buffer, NULL, NULL);
+
+									float lat_s;
+									float long_s;
+									XPLMGetNavAidInfo(nav_scenario, &nav_type_scenario, &lat_s, &long_s, NULL, NULL, NULL, buffer, NULL, NULL);
+
+									m_mission_scenario_lat = lat_s;
+									m_mission_scenario_long = long_s;
 
 									if (nav_type_scenario != xplm_Nav_Airport)			scenario_search_finished = true;
 									else if (m_cm_scenario_icao.compare(buffer) == 0)	scenario_navaid_found = true;

@@ -148,23 +148,23 @@ namespace HRM
 
 	//const float threshold_g_mult_flight1 = 1.2;
 
-	const float threshold_g_mult_flight2 = 1;
+	const float threshold_g_mult_flight2 = 1.0f;
 
-	const float threshold_gf_low = 0.2;
-	const float threshold_gf_med = 0.35;
-	const float threshold_gf_high = 0.5;
+	const float threshold_gf_low = 0.2f;
+	const float threshold_gf_med = 0.35f;
+	const float threshold_gf_high = 0.5f;
 
-	const float threshold_gs_low = 0.15;
-	const float threshold_gs_med = 0.35;
-	const float threshold_gs_high = 0.5;
+	const float threshold_gs_low = 0.15f;
+	const float threshold_gs_med = 0.35f;
+	const float threshold_gs_high = 0.5f;
 
-	const float threshold_gv_pos_low = 1.2;
-	const float threshold_gv_pos_med = 1.5;
-	const float threshold_gv_pos_high = 1.8;
+	const float threshold_gv_pos_low = 1.2f;
+	const float threshold_gv_pos_med = 1.5f;
+	const float threshold_gv_pos_high = 1.8f;
 
-	const float threshold_gv_neg_low = 0;
-	const float threshold_gv_neg_med = 0;
-	const float threshold_gv_neg_high = 0;
+	const float threshold_gv_neg_low = 0.f;
+	const float threshold_gv_neg_med = 0.f;
+	const float threshold_gv_neg_high = 0.f;
 
 	const int points_difficulty = 10;
 	const int points_speed_flight1 = 20;

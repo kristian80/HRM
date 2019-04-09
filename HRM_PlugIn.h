@@ -71,7 +71,7 @@ public:
 
 	// Saved
 
-	float m_cm_collective_min = 0.1;
+	float m_cm_collective_min = 0.1f;
 	int m_cm_airac_cycle = 1809;
 
 	float m_patient_weight = 75;
@@ -275,7 +275,7 @@ public:
 
 	float m_lf_climb_rate;
 
-	float m_li_sim_ground_speed;
+	int m_li_sim_ground_speed;
 
 	int m_li_battery_on;
 
@@ -307,7 +307,7 @@ public:
 
 	void ConfigureXSlingload();
 	void MissionCreate();
-	bool FindWaypoint(std::vector<HRM_Waypoint *> *p_waypoint_vector, std::vector<HRM_Waypoint *> &considered_waypoints);
+	bool FindWaypoint(std::vector<HRM_Waypoint*>* p_waypoint_vector, std::vector<HRM_Waypoint*> &global_waypoint_vector, std::vector<HRM_Waypoint*>& considered_waypoints);
 	void MissionStart();
 	void MissionStartFlight1();
 	void MissionStartFlight2();
@@ -331,7 +331,9 @@ public:
 	void AddCustomICAO();
 
 	void ReadFSEAirports();
-	void ReadWaypoints(std::vector<HRM_Waypoint *> &waypoint_vector, std::string file_name);
+	void ReadCustomWaypoints(std::vector<HRM_Waypoint *> &waypoint_vector, std::string file_name);
+	void ReadGlobalWaypoints(std::vector<HRM_Waypoint *> &waypoint_vector, std::string file_name);
+	void ReadWaypointFile(std::vector<HRM_Waypoint *> &waypoint_vector, std::string file_name);
 	
 	void SaveConfig();
 	void ReadConfig();
