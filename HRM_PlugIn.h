@@ -39,6 +39,9 @@ public:
 	std::vector<HRM_Waypoint *> m_sar_waypoints;
 	std::vector<HRM_Waypoint *> m_sling_waypoints;
 
+	std::vector<std::string> m_path_vector;
+	std::string m_global_path;
+
 	bool m_street_enable = true;
 	bool m_urban_enable = false;
 	bool m_sar_enable = false;

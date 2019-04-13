@@ -11,9 +11,17 @@ HRM_PlugIn::HRM_PlugIn() :
 	m_urban_waypoints(),
 	m_sar_waypoints(),
 	m_sling_waypoints(),
+	m_path_vector(),
 	m_fse_airports()
 
 {
+
+	m_path_vector.push_back("BaseMesh");
+	m_path_vector.push_back("Ortho4XP");
+	m_path_vector.push_back("ZonePhoto");
+	m_path_vector.push_back("ForkBoy");
+
+	m_global_path = m_path_vector[0];
 	
 }
 
@@ -1145,7 +1153,7 @@ void HRM_PlugIn::ReadGlobalWaypoints(std::vector<HRM_Waypoint*>& waypoint_vector
 			if ((long_index < 10) && (long_index > -10)) waypoint_filename += "0";
 			waypoint_filename += std::to_string(abs(long_index));
 
-			ReadWaypointFile(waypoint_vector, m_config_path + "global_waypoints" + m_ds + waypoint_filename + ".fms");
+			ReadWaypointFile(waypoint_vector, m_config_path + m_global_path + m_ds + waypoint_filename + ".fms");
 		}
 	}
 

@@ -68,6 +68,8 @@ void HRMImguiWidget::buildInterface()
 	ImVec4 color_yellow = ImColor(255, 255, 0);
 	ImVec4 color_green = ImColor(0, 255, 0);
 
+	static int radio_path = 0;
+
 	if (pHRM->m_mission_state == HRM::State_Create_Mission)
 	{
 		
@@ -182,6 +184,36 @@ void HRMImguiWidget::buildInterface()
 		ImGui::Spacing();
 		ImGui::Separator();
 		ImGui::Spacing();
+
+		ImGui::Columns(2, 0, true);
+
+		ImGui::Text("Global Waypoint Folder:");
+
+		int column = 1;
+
+		for (int index = 0; index < pHRM->m_path_vector.size(); index++)
+		{
+			std::string folder_name = pHRM->m_path_vector[index];
+
+			if ((index >= (pHRM->m_path_vector.size() / 2)) && (column == 1))
+			{
+				ImGui::NextColumn();
+				column = 2;
+				ImGui::Text("   ");
+			}
+			if (ImGui::RadioButton(folder_name.c_str(), radio_path == index))
+			{
+				radio_path = index;
+				pHRM->m_global_path = folder_name;
+			}
+
+		}
+
+		ImGui::Columns(1, 0, true);
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
 		ImGui::PushItemWidth(50);
 		ImGui::InputText("ICAO", &(pHRM->m_custom_icao));
 		ImGui::PopItemWidth();
