@@ -385,6 +385,7 @@ void HRM_PlugIn::MissionCreate()
 		{
 			if ((m_sar_enable) && (random_type == 2))
 			{
+				ReadGlobalWaypoints(global_waypoints, "sar");
 
 				p_waypoint_vector = &m_sar_waypoints;
 				p_mission_vector = &m_sar_missions;
@@ -396,6 +397,8 @@ void HRM_PlugIn::MissionCreate()
 		{
 			if ((m_sling_enable) && (random_type == 3))
 			{
+				ReadGlobalWaypoints(global_waypoints, "sling");
+
 				p_waypoint_vector = &m_sling_waypoints;
 				p_mission_vector = &m_sling_missions;
 			}

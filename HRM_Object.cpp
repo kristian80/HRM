@@ -114,15 +114,26 @@ void HRM_Object::SetPosition(double zero_latitude, double zero_longitude, double
 
 	if (result == xplm_ProbeHitTerrain)
 	{
+		total_heading = zero_heading + m_heading;
+		if (total_heading > 360) total_heading -= 360;
+
+		float angle_x_0 = (1.f * asin(info.normalX) * 180.0f / M_PI);
+		float angle_y_0 = (1.f * acos(info.normalY) * 180.0f / M_PI);
+
+		float angle_x_heading = cos(total_heading * M_PI / 180.0) * angle_x_0 + sin(total_heading * M_PI / 180.0) * angle_y_0;
+		float angle_y_heading = -1*sin(total_heading * M_PI / 180.0) * angle_x_0 + cos(total_heading * M_PI / 180.0) * angle_y_0;
+
+
+		float total_pitch = angle_y_heading + m_pitch;
+		float total_roll = angle_x_heading + m_roll;
 		
-		double total_pitch = (1.f * asin(info.normalX) * 180 / M_PI) + m_pitch;
-		double total_roll = (-1.f * acos(info.normalY) * 180 / M_PI) + m_roll;
+		//float total_pitch = (1.f * asin(x_normal) * 180.0f / M_PI) + m_pitch;
+		//float total_roll = (-1.f * acos(y_normal) * 180.0f / M_PI) + m_roll;
 
 		if (total_pitch > 360) total_pitch -= 360.f;
 		if (total_roll > 360) total_roll -= 360.f;
 
-		total_heading = zero_heading + m_heading;
-		if (total_heading > 360) total_heading -= 360;
+		
 
 		XPLMDrawInfo_t		dr;
 		dr.structSize = sizeof(dr);
