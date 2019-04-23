@@ -1,3 +1,20 @@
+/*
+ * This file is part of the HRM distribution (https://github.com/kristian80/HRM).
+ * Copyright (c) 2019 Kristian80.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #pragma once
 #define NOMINMAX
 #include <stdio.h>
@@ -158,13 +175,13 @@ namespace HRM
 	const float threshold_gs_med = 0.35f;
 	const float threshold_gs_high = 0.5f;
 
-	const float threshold_gv_pos_low = 1.2f;
+	const float threshold_gv_pos_low = 1.3f;
 	const float threshold_gv_pos_med = 1.5f;
 	const float threshold_gv_pos_high = 1.8f;
 
-	const float threshold_gv_neg_low = 0.f;
-	const float threshold_gv_neg_med = 0.f;
-	const float threshold_gv_neg_high = 0.f;
+	const float threshold_gv_neg_low = 0.7f;
+	const float threshold_gv_neg_med = 0.5f;
+	const float threshold_gv_neg_high = 0.3f;
 
 	const int points_difficulty = 10;
 	const int points_speed_flight1 = 20;

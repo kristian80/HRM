@@ -1,3 +1,20 @@
+/*
+ * This file is part of the HRM distribution (https://github.com/kristian80/HRM).
+ * Copyright (c) 2019 Kristian80.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "HRM_PlugIn.h"
 
 
@@ -105,7 +122,7 @@ void HRM_PlugIn::PluginStart()
 		                                        300, 
 												550, 
 												300 + 430, 
-												550 - 400, 
+												550 - 500, 
 												decorate);  // calls constructor
 	//imguiPtr-> // calls ImgWindow::init from the base class which in turn virtually calls the overridden function
 	

@@ -1,0 +1,1 @@
+xcopy /s "Release\plugins" "G:\X-Plane 11\Resources\plugins"
