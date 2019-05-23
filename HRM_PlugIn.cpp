@@ -36,9 +36,10 @@ HRM_PlugIn::HRM_PlugIn() :
 	m_path_vector.push_back("BaseMesh");
 	m_path_vector.push_back("Ortho4XP");
 	m_path_vector.push_back("ZonePhoto");
-	m_path_vector.push_back("ForkBoy");
+	//m_path_vector.push_back("ForkBoy");
 
 	m_global_path = m_path_vector[0];
+	m_global_path_index = 0;
 	
 }
 
@@ -780,6 +781,7 @@ void HRM_PlugIn::MissionReset()
 	m_xslingload_not_found = false;
 	m_xslingload_found = false;
 	m_xslingload_reload_position_file = false;
+	m_412sar_found = false;
 
 	mp_cm_waypoint = NULL;
 	mp_cm_mission = NULL;
@@ -854,6 +856,10 @@ bool HRM_PlugIn::FSECanFinish()
 void HRM_PlugIn::FSEFinishFlight()
 {
 	XPLMCommandOnce(m_fse_command_end);
+}
+
+void HRM_PlugIn::Check412SAR()
+{
 }
 
 void HRM_PlugIn::CreateFlightPlan()
@@ -1271,6 +1277,16 @@ void HRM_PlugIn::SaveConfig()
 
 	//pt.push_back("HRM.", );
 
+
+	pt.put("HRM.global_path_index", m_global_path_index);
+
+	if (m_global_path_index < m_path_vector.size())
+	{
+		m_global_path = m_path_vector[m_global_path_index];
+	}
+
+	pt.put("HRM.flight_plan_format", m_flight_plan_format);
+
 	pt.put("HRM.collective_down_threshold", m_cm_collective_min);
 
 	pt.put("HRM.airac_cycle", m_cm_airac_cycle);
@@ -1299,6 +1315,8 @@ void HRM_PlugIn::SaveConfig()
 	pt.put("HRM.pickup_countdown_s", m_patient_countdown_value);
 	pt.put("HRM.hospital_delivery_countdown_s", m_hospital_countdown_value);
 
+	
+	pt.put("HRM.sling_load_plugin", m_sling_load_plugin);
 	pt.put("HRM.xslingload_treshold", m_xslingload_treshold);
 	pt.put("HRM.xslingload_weight_empty", m_xslingload_weight_empty);
 	pt.put("HRM.xslingload_weight_full", m_xslingload_weight_full);
@@ -1322,6 +1340,12 @@ void HRM_PlugIn::ReadConfig()
 		HRMDebugString("Could not read config file");
 		return;
 	}
+
+	try { m_global_path_index = pt.get<int>("HRM.global_path_index"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_flight_plan_format = pt.get<int>("HRM.flight_plan_format"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
 
 	try { m_cm_collective_min = pt.get<float>("HRM.collective_down_threshold"); }
 	catch (...) { HRMDebugString("Ini File: Entry not found."); }
@@ -1396,6 +1420,9 @@ void HRM_PlugIn::ReadConfig()
 	catch (...) { HRMDebugString("Ini File: Entry not found."); }
 
 	try { m_xslingload_treshold = pt.get<float>("HRM.xslingload_treshold"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_sling_load_plugin = pt.get<int>("HRM.sling_load_plugin"); }
 	catch (...) { HRMDebugString("Ini File: Entry not found."); }
 
 	try { m_xslingload_weight_empty = pt.get<float>("HRM.xslingload_weight_empty"); }
@@ -1581,11 +1608,9 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			
 			if (m_mission_state == HRM::State_Create_Mission)
 			{
-				if ((m_sling_enable == true) && (m_xslingload_found == false))
+				if ((m_sling_enable == true) && (m_sling_load_plugin == HRM::XSlingload) && (m_xslingload_found == false))
 				{
 					std::ifstream check_file(m_xslingload_ini_path);
-
-					
 
 					if (check_file.good() == true)
 					{
@@ -1598,6 +1623,28 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 						m_xslingload_not_found = true;
 					}
 					check_file.close();
+				}
+
+				if ((m_sling_enable == true) && (m_sling_load_plugin == HRM::AB412) && (m_412sar_found == false))
+				{
+					if (m_patient_off == NULL) m_patient_off = XPLMFindCommand("412/buttons/PATIENT_off");
+					if (m_patient_ground == NULL) m_patient_ground = XPLMFindCommand("412/buttons/PATIENT_on_ground");
+					if (m_patient_transit == NULL) m_patient_transit = XPLMFindCommand("412/buttons/PATIENT_in_transit");
+					if (m_patient_board == NULL) m_patient_board = XPLMFindCommand("412/buttons/PATIENT_on_board");
+					if (m_operator_on == NULL) m_operator_on = XPLMFindCommand("412/buttons/CREW_on");
+					if (m_operator_off == NULL) m_operator_off = XPLMFindCommand("412/buttons/CREW_off");
+
+					if (m_patient_off != NULL)
+					{
+						m_412sar_found = true;
+						m_412sar_not_found = false;
+					}
+					else
+					{
+						m_412sar_found = false;
+						m_412sar_not_found = true;
+					}
+					
 				}
 
 

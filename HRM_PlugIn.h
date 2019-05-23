@@ -23,8 +23,6 @@
 
 
 
-
-
 class HRM_PlugIn
 {
 public:
@@ -58,6 +56,7 @@ public:
 
 	std::vector<std::string> m_path_vector;
 	std::string m_global_path;
+	int m_global_path_index = 0;
 
 	bool m_street_enable = true;
 	bool m_urban_enable = false;
@@ -91,6 +90,7 @@ public:
 
 	// Saved
 
+	int m_flight_plan_format = HRM::FPL_XP11;
 	float m_cm_collective_min = 0.1f;
 	int m_cm_airac_cycle = 1809;
 
@@ -120,6 +120,8 @@ public:
 	float m_patient_countdown_value = 30;
 	float m_hospital_countdown_value = 10;
 
+	int m_sling_load_plugin = HRM::XSlingload;
+
 	float m_xslingload_treshold = 50;
 	float m_xslingload_weight_empty = 15;
 	float m_xslingload_weight_full = 140;
@@ -141,8 +143,26 @@ public:
 	bool m_cm_not_on_ground = false;
 	bool m_custom_icao_exists = false;
 	bool m_xslingload_not_found = false;
+	
 	bool m_xslingload_found = false;
 	bool m_xslingload_reload_position_file = false;
+
+	// 412 SAR
+	bool m_412sar_found = false;
+	bool m_412sar_not_found = false;
+	XPLMCommandRef m_patient_off = NULL;
+	XPLMCommandRef m_patient_ground = NULL;
+	XPLMCommandRef m_patient_transit = NULL;
+	XPLMCommandRef m_patient_board = NULL;
+	XPLMCommandRef m_operator_on = NULL;
+	XPLMCommandRef m_operator_off = NULL;
+
+	XPLMDataRef m_f_412_hook_x = NULL;
+	XPLMDataRef m_f_412_hook_y = NULL;
+	XPLMDataRef m_f_412_hook_z = NULL;
+	XPLMDataRef m_f_412_hook_cable_extended = NULL;
+
+
 
 	HRM_Waypoint *mp_cm_waypoint = NULL;
 	HRM_Mission *mp_cm_mission = NULL;
@@ -342,6 +362,8 @@ public:
 	bool FSEIsFlying();
 	bool FSECanFinish();
 	void FSEFinishFlight();
+
+	void Check412SAR();
 	
 
 

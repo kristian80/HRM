@@ -113,6 +113,18 @@ namespace HRM
 
 	const int type_sling = 3;
 
+	enum Slingload_Type
+	{
+		XSlingload,
+		AB412
+	};
+	enum FlightPlan_Type
+	{
+		FPL_XP11,
+		FPL_XP10,
+		FPL_GTN
+	};
+
 	enum Mission_State
 	{
 		State_Create_Mission,

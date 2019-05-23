@@ -85,7 +85,7 @@ void HRMImguiWidget::buildInterface()
 	ImVec4 color_yellow = ImColor(255, 255, 0);
 	ImVec4 color_green = ImColor(0, 255, 0);
 
-	static int radio_path = 0;
+	//static int radio_path = 0;
 
 	if (pHRM->m_mission_state == HRM::State_Create_Mission)
 	{
@@ -104,16 +104,31 @@ void HRMImguiWidget::buildInterface()
 		ImGui::Checkbox("Search and Rescue", &(pHRM->m_sar_enable));
 		ImGui::Checkbox("Sling Line", &(pHRM->m_sling_enable));
 
-		if (pHRM->m_xslingload_not_found == true)
+		//if (pHRM->m_sling_enable == true)
+		{
+			if (ImGui::RadioButton("X-Slingload", pHRM->m_sling_load_plugin == HRM::XSlingload))	pHRM->m_sling_load_plugin = HRM::XSlingload;
+			if (ImGui::RadioButton("AB 412", pHRM->m_sling_load_plugin == HRM::AB412))				pHRM->m_sling_load_plugin = HRM::AB412;
+
+		}
+
+		if ((pHRM->m_xslingload_not_found == true) && (pHRM->m_sling_load_plugin == HRM::XSlingload))
 		{
 			ImGui::PushStyleColor(ImGuiCol_Text, color_red);
-			ImGui::Text("X-Slingline not found");
+			ImGui::Text("X-Slingload not found");
 			ImGui::PopStyleColor();
 		}
 
-		ImGui::Spacing();
-		ImGui::Spacing();
-		ImGui::Spacing();
+		if ((pHRM->m_412sar_not_found == true) && (pHRM->m_sling_load_plugin == HRM::AB412))
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+			ImGui::Text("AB 412 not found");
+			ImGui::PopStyleColor();
+		}
+
+		ImGui::Text("FPL Format:");
+		if (ImGui::RadioButton("XP11", pHRM->m_flight_plan_format == HRM::FPL_XP11))		pHRM->m_flight_plan_format = HRM::FPL_XP11;
+		if (ImGui::RadioButton("XP10", pHRM->m_flight_plan_format == HRM::FPL_XP10))		pHRM->m_flight_plan_format = HRM::FPL_XP10;
+		if (ImGui::RadioButton("GTN GFP", pHRM->m_flight_plan_format == HRM::FPL_GTN))		pHRM->m_flight_plan_format = HRM::FPL_GTN;
 
 		ImGui::Checkbox("Adjust Payload", &(pHRM->m_adjust_payload));
 
@@ -218,9 +233,9 @@ void HRMImguiWidget::buildInterface()
 				column = 2;
 				ImGui::Text("   ");
 			}
-			if (ImGui::RadioButton(folder_name.c_str(), radio_path == index))
+			if (ImGui::RadioButton(folder_name.c_str(), pHRM->m_global_path_index == index))
 			{
-				radio_path = index;
+				pHRM->m_global_path_index = index;
 				pHRM->m_global_path = folder_name;
 			}
 
