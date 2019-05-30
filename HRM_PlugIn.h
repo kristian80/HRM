@@ -22,6 +22,8 @@
 #include "HRM_Mission.h"
 
 
+#define HRM_MESSAGE_SOUND_1 0x85747400
+
 
 class HRM_PlugIn
 {
@@ -36,6 +38,9 @@ public:
 
 	std::string m_xslingload_ini_path = "";
 	std::string m_xslingload_apt_path = "";
+
+
+	XPLMPluginID m_ivy_id = XPLM_NO_PLUGIN_ID;
 
 	//int m_scenery_number = 1;
 
@@ -113,6 +118,9 @@ public:
 	bool m_cm_estmimated_wp = true;
 	int m_cm_estimated_radius_m = 500;
 
+	float m_cm_sling_say_distance = 100;
+	float m_cm_sling_say_time = 3.5;
+
 	std::string m_cm_hospital_icao = "";
 
 	int m_difficutly = HRM::Normal;
@@ -121,6 +129,8 @@ public:
 	float m_hospital_countdown_value = 10;
 
 	int m_sling_load_plugin = HRM::XSlingload;
+	float m_sling_load_distance = 3.0f;
+	float m_sling_load_time_min = 1.0f;
 
 	float m_xslingload_treshold = 50;
 	float m_xslingload_weight_empty = 15;
@@ -143,9 +153,17 @@ public:
 	bool m_cm_not_on_ground = false;
 	bool m_custom_icao_exists = false;
 	bool m_xslingload_not_found = false;
+	bool m_cm_patient_sight_said = false;
+	
+	float m_cm_say_timer = 0;
+	int m_cm_say_state = 0;
+	float m_cm_distance_h_max = 0;
 	
 	bool m_xslingload_found = false;
 	bool m_xslingload_reload_position_file = false;
+
+
+	
 
 	// 412 SAR
 	bool m_412sar_found = false;
@@ -161,6 +179,56 @@ public:
 	XPLMDataRef m_f_412_hook_y = NULL;
 	XPLMDataRef m_f_412_hook_z = NULL;
 	XPLMDataRef m_f_412_hook_cable_extended = NULL;
+	XPLMDataRef m_f_412_hook_cable_direction = NULL;
+
+	XPLMDataRef m_f_412_ext_lat = NULL;
+	XPLMDataRef m_f_412_ext_long = NULL;
+	XPLMDataRef m_i_412_ext_set = NULL;
+
+	float m_lf_412_hook_x = NULL;
+	float m_lf_412_hook_y = NULL;
+	float m_lf_412_hook_z = NULL;
+	float m_lf_412_hook_cable_extended = NULL;
+	float m_lf_412_hook_cable_direction = NULL;
+
+	float m_lf_412_ext_lat = NULL;
+	float m_lf_412_ext_long = NULL;
+	int m_li_412_ext_set = NULL;
+
+	double m_412_meter_lat = 1;
+	double m_412_meter_long = 1;
+
+	float m_412_patient_distance = 0;
+	float m_412_patient_distance_side = 0;
+	float m_412_patient_distance_forward = 0;
+	float m_412_patient_distance_alt = 0;
+	float m_412_patient_heading = 0;
+
+	float m_412_patient_local_x = 0;
+	float m_412_patient_local_y = 0;
+	float m_412_patient_local_z = 0;
+
+	double m_412_patient_lat = 0;
+	double m_412_patient_long = 0;
+	double m_412_patient_elev = 0;
+
+	float m_412_patient_loading_time = 0;
+
+	float m_412_correct_lat = 0;
+	float m_412_correct_long = 0;
+
+	float m_412_correct_lat_m = 0;
+	float m_412_correct_long_m = 0;
+
+	bool m_412_crew_on = false;
+
+	XPLMProbeRef m_412_probe = NULL;
+	XPLMObjectRef m_412_obj_ref = NULL;
+	XPLMInstanceRef m_412_inst_ref = NULL;
+
+	HRM::AB412_Patient_Status_Type m_412_patient_status = HRM::Patient_Off;
+
+	
 
 
 
@@ -250,6 +318,14 @@ public:
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// DATAREFS
 
+
+	XPLMDataRef m_d_local_x;
+	XPLMDataRef m_d_local_y;
+	XPLMDataRef m_d_local_z;
+
+	XPLMDataRef m_f_local_phi;
+	XPLMDataRef m_f_local_psi;
+	XPLMDataRef m_f_local_theta;
 	
 
 	XPLMDataRef m_d_latitude;
@@ -274,6 +350,8 @@ public:
 	XPLMDataRef m_i_on_ground;
 	XPLMDataRef m_ia_engines_running;
 	XPLMDataRef m_f_park_brake;
+	XPLMDataRef m_ia_custom_slider_on;
+	XPLMDataRef m_fa_custom_slider_ratio;
 
 	XPLMDataRef m_f_climb_rate;
 
@@ -290,6 +368,14 @@ public:
 
 	/////////////////////////////////////////////////////////////////////////////////
 	// Dataref Variables
+
+	double m_ld_local_x;
+	double m_ld_local_y;
+	double m_ld_local_z;
+
+	float m_lf_local_phi;
+	float m_lf_local_psi;
+	float m_lf_local_theta;
 
 	double m_ld_latitude;
 	double m_ld_longitude;
@@ -311,6 +397,8 @@ public:
 
 	int m_li_on_ground;
 	int m_lia_engines_running[2];
+	int m_lia_custom_slider_on[24];
+	float m_lfa_custom_slider_ratio[24];
 	float m_lf_park_brake;
 
 	float m_lf_climb_rate;
@@ -364,6 +452,8 @@ public:
 	void FSEFinishFlight();
 
 	void Check412SAR();
+
+	void IvyPlaySound(int sound_before, int say_value, int sound_after);
 	
 
 

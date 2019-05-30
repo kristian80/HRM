@@ -125,6 +125,15 @@ void HRMImguiWidget::buildInterface()
 			ImGui::PopStyleColor();
 		}
 
+		if (pHRM->m_sling_load_plugin == HRM::AB412)
+		{
+			ImGui::PushItemWidth(80);
+			ImGui::Text("Patient Pickup");
+			ImGui::SliderFloat("Distance [m]", &(pHRM->m_sling_load_distance),0.1,10,"%.1f");
+			ImGui::SliderFloat("Time [s]    ", &(pHRM->m_sling_load_time_min), 0.0, 10, "%.1f");
+			ImGui::PopItemWidth();
+		}
+
 		ImGui::Text("FPL Format:");
 		if (ImGui::RadioButton("XP11", pHRM->m_flight_plan_format == HRM::FPL_XP11))		pHRM->m_flight_plan_format = HRM::FPL_XP11;
 		if (ImGui::RadioButton("XP10", pHRM->m_flight_plan_format == HRM::FPL_XP10))		pHRM->m_flight_plan_format = HRM::FPL_XP10;
@@ -212,12 +221,12 @@ void HRMImguiWidget::buildInterface()
 			ImGui::PopStyleColor();
 		}
 
-		ImGui::Columns(1, 0, true);
+		/*ImGui::Columns(1, 0, true);
 		ImGui::Spacing();
 		ImGui::Separator();
 		ImGui::Spacing();
 
-		ImGui::Columns(2, 0, true);
+		ImGui::Columns(2, 0, true);*/
 
 		ImGui::Text("Global Waypoint Folder:");
 
@@ -227,12 +236,12 @@ void HRMImguiWidget::buildInterface()
 		{
 			std::string folder_name = pHRM->m_path_vector[index];
 
-			if ((index >= (pHRM->m_path_vector.size() / 2)) && (column == 1))
+			/*if ((index >= (pHRM->m_path_vector.size() / 2)) && (column == 1))
 			{
 				ImGui::NextColumn();
 				column = 2;
 				ImGui::Text("   ");
-			}
+			}*/
 			if (ImGui::RadioButton(folder_name.c_str(), pHRM->m_global_path_index == index))
 			{
 				pHRM->m_global_path_index = index;
@@ -452,6 +461,7 @@ void HRMImguiWidget::buildInterface()
 	{
 		ImGui::Text("Mission Status: Flight to Patient");
 
+
 		ImGui::Spacing();
 		ImGui::Separator();
 		ImGui::Spacing();
@@ -481,6 +491,42 @@ void HRMImguiWidget::buildInterface()
 			ImGui::Text(HRM_PlugIn::CreateTimeString(pHRM->m_mission_flight1_countdown).c_str());
 
 			ImGui::PopStyleColor();
+
+			if (pHRM->mp_cm_mission->IsSlingLoad() == true)
+			{
+				if (pHRM->m_sling_load_plugin == HRM::AB412)
+				{
+					if (pHRM->m_412_patient_distance <= pHRM->m_cm_sling_say_distance)
+					{
+						ImGui::Spacing();
+						ImGui::Spacing();
+																							ImGui::Text("                         Alt: %+3.1f", pHRM->m_412_patient_distance_alt);
+						ImGui::Spacing();
+						ImGui::Spacing();
+						if (pHRM->m_412_patient_distance_forward > 0)						ImGui::Text("                %3.1f", pHRM->m_412_patient_distance_forward);
+						else																ImGui::Text("                -----");
+						ImGui::Spacing();
+						if (pHRM->m_412_patient_distance_side < 0)							ImGui::Text("         %3.1f         -----", abs(pHRM->m_412_patient_distance_side));
+						if (pHRM->m_412_patient_distance_side >= 0)							ImGui::Text("         -----         %3.1f", abs(pHRM->m_412_patient_distance_side));
+						ImGui::Spacing();
+						if (pHRM->m_412_patient_distance_forward < 0)						ImGui::Text("                %3.1f", abs(pHRM->m_412_patient_distance_forward));
+						else																ImGui::Text("                -----");
+						ImGui::Spacing();
+						ImGui::Spacing();
+						ImGui::Text("Dist:    %3.1f", pHRM->m_412_patient_distance);
+						ImGui::Text("Time     %3.1f", pHRM->m_412_patient_loading_time);
+					}
+
+					/*ImGui::Text("Heading: %3.1f", pHRM->m_412_patient_heading);
+					ImGui::Text("Dist:    %3.1f", pHRM->m_412_patient_distance);
+					ImGui::Text("Forward: %3.1f", pHRM->m_412_patient_distance_forward);
+					ImGui::Text("Side:    %3.1f", pHRM->m_412_patient_distance_side);
+					ImGui::Text("Alt:     %3.1f", pHRM->m_412_patient_distance_alt);
+					ImGui::Text("Time     %3.1f", pHRM->m_412_patient_loading_time);*/
+
+					
+				}
+			}
 		}
 		else
 		{

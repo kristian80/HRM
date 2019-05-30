@@ -79,6 +79,13 @@
 //#define MAX_GRAPH_DATA 1000
 //#define MAX_GRAPH_TIME 100
 
+struct HRM_Sound
+{
+	int sound_before = -1;
+	int say_value = -1;
+	int sound_after = -1;
+};
+
 struct HRM_Waypoint
 {
 	double latitude = 0;
@@ -123,6 +130,14 @@ namespace HRM
 		FPL_XP11,
 		FPL_XP10,
 		FPL_GTN
+	};
+
+	enum AB412_Patient_Status_Type
+	{
+		Patient_Ground,
+		Patient_Transit,
+		Patient_OnBoard,
+		Patient_Off
 	};
 
 	enum Mission_State

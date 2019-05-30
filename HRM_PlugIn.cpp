@@ -133,9 +133,17 @@ void HRM_PlugIn::PluginStart()
 
 	HRMDebugString("Lookup Datarefs");
 
+	m_d_local_x = XPLMFindDataRef("sim/flightmodel/position/local_x");
+	m_d_local_y = XPLMFindDataRef("sim/flightmodel/position/local_y");
+	m_d_local_z = XPLMFindDataRef("sim/flightmodel/position/local_z");
+
+	m_f_local_phi = XPLMFindDataRef("sim/flightmodel/position/phi");
+	m_f_local_psi = XPLMFindDataRef("sim/flightmodel/position/psi");
+	m_f_local_theta = XPLMFindDataRef("sim/flightmodel/position/theta");
+
 	m_d_latitude = XPLMFindDataRef("sim/flightmodel/position/latitude");
 	m_d_longitude = XPLMFindDataRef("sim/flightmodel/position/longitude");
-	m_f_heading = XPLMFindDataRef("sim/flightmodel/position/psi");
+	m_f_heading = XPLMFindDataRef("sim/flightmodel/position/true_psi");
 
 	m_f_g_normal = XPLMFindDataRef("sim/flightmodel/forces/g_nrml");
 	m_f_g_forward = XPLMFindDataRef("sim/flightmodel/forces/g_axil");
@@ -154,6 +162,9 @@ void HRM_PlugIn::PluginStart()
 	m_i_on_ground = XPLMFindDataRef("sim/flightmodel/failures/onground_any");
 	m_ia_engines_running = XPLMFindDataRef("sim/flightmodel/engine/ENGN_running");
 	m_f_park_brake = XPLMFindDataRef("sim/cockpit2/controls/parking_brake_ratio");
+
+	m_ia_custom_slider_on = XPLMFindDataRef("sim/cockpit2/switches/custom_slider_on");
+	m_fa_custom_slider_ratio = XPLMFindDataRef("sim/flightmodel2/misc/custom_slider_ratio");
 
 	m_f_climb_rate = XPLMFindDataRef("sim/flightmodel/position/vh_ind_fpm");
 
@@ -177,6 +188,8 @@ void HRM_PlugIn::PluginStart()
 
 	ReadFSEAirports();
 	ReadCustomICAOs();
+
+	m_ivy_id = XPLMFindPluginBySignature("k80.Ivy");
 
 	m_initialized = true;
 }
@@ -484,10 +497,37 @@ void HRM_PlugIn::MissionCreate()
 	// TODO: FSE Airports
 
 	CreateFlightPlan();
+	
+	// Sling Load
 	if (mp_cm_mission->IsSlingLoad() == true)
 	{
-		ConfigureXSlingload();
+
+		if (pHRM->m_sling_load_plugin == HRM::XSlingload)
+		{
+			ConfigureXSlingload();
+		}
+		else if (pHRM->m_sling_load_plugin == HRM::AB412)
+		{
+			XPLMSetDataf(m_f_412_ext_lat, mp_cm_waypoint->latitude);
+			XPLMSetDataf(m_f_412_ext_long, mp_cm_waypoint->longitude);
+			XPLMSetDatai(m_i_412_ext_set, 1);
+			m_412_patient_status = HRM::Patient_Off;
+			XPLMCommandOnce(m_patient_ground);
+			m_412_patient_loading_time = 0;
+
+			m_412_meter_lat = calc_distance_m(mp_cm_waypoint->latitude, mp_cm_waypoint->longitude, mp_cm_waypoint->latitude + 1, mp_cm_waypoint->longitude);
+			m_412_meter_long = calc_distance_m(mp_cm_waypoint->latitude, mp_cm_waypoint->longitude, mp_cm_waypoint->latitude, mp_cm_waypoint->longitude+ 1);
+
+			XPLMLookupObjects("RescueX/people/Bergwacht/Bergwacht_Luftretter2.obj", 0, 0, load_cb, &m_412_obj_ref);
+			const char * drefs[] = { NULL, NULL };
+			m_412_inst_ref = XPLMCreateInstance(m_412_obj_ref, drefs);
+
+			m_cm_distance_h_max = sqrt((m_sling_load_distance * m_sling_load_distance) / 3);
+
+		}
 	}
+	// Say new mission
+	IvyPlaySound(1, -1, -1);
 
 	pHRM->m_mission_state = HRM::State_Plan_Flight;
 
@@ -598,6 +638,11 @@ void HRM_PlugIn::MissionStart()
 	{
 		FSEStartFlight();
 	}
+	else
+	{
+		// Say flight planning finished
+		IvyPlaySound(2, -1, -1);
+	}
 
 	if ((m_li_battery_on == 0) && (m_lia_engines_running[0] == 0) && (m_lia_engines_running[1] == 0))
 	{
@@ -612,6 +657,8 @@ void HRM_PlugIn::MissionStart()
 		m_mission_preflight_countdown = 0;
 		MissionStartFlight1();
 	}
+
+
 
 
 	
@@ -645,6 +692,16 @@ void HRM_PlugIn::MissionStartFlight1()
 		XPLMSetDataf(m_f_payload, m_crew_weight + m_ems_equippment_weight);
 	}
 
+	// Sling Load
+	if (mp_cm_mission->IsSlingLoad() == true)
+	{
+
+		if (pHRM->m_sling_load_plugin == HRM::AB412)
+		{
+			if (m_patient_ground != NULL) XPLMCommandOnce(m_patient_ground);
+		}
+	}
+
 	pHRM->m_mission_state = HRM::State_Flight_1;
 }
 
@@ -674,6 +731,15 @@ void HRM_PlugIn::MissionStartFlight2()
 	{
 		XPLMSetDataf(m_f_payload, m_crew_weight + m_ems_equippment_weight + m_patient_weight);
 	}
+
+	if ((mp_cm_mission->IsSlingLoad() == true) && (m_sling_load_plugin == HRM::AB412));
+	{
+		XPLMCommandOnce(m_patient_transit);
+		m_412_patient_status = HRM::Patient_Transit;
+		// Patient loaded
+		IvyPlaySound(12, -1, -1);
+	}
+
 
 	pHRM->m_mission_state = HRM::State_Flight_2;
 }
@@ -731,7 +797,8 @@ void HRM_PlugIn::MissionFinish()
 	}
 
 	
-
+	// Missiong finished
+	IvyPlaySound(8, m_mission_points_total, 9);
 
 	
 
@@ -782,6 +849,7 @@ void HRM_PlugIn::MissionReset()
 	m_xslingload_found = false;
 	m_xslingload_reload_position_file = false;
 	m_412sar_found = false;
+	m_cm_patient_sight_said = false;
 
 	mp_cm_waypoint = NULL;
 	mp_cm_mission = NULL;
@@ -794,6 +862,24 @@ void HRM_PlugIn::MissionReset()
 	m_mission_points_g_force = 0;
 	m_mission_points_difficulty = 0;
 	m_mission_points_search_range = 0;
+
+	m_412_patient_status = HRM::Patient_Off;
+	m_412_crew_on = false;
+	if (m_operator_off != NULL) XPLMCommandOnce(m_operator_off);
+	if (m_patient_off != NULL) XPLMCommandOnce(m_patient_off);
+
+	m_412_patient_local_x = 0;
+	m_412_patient_local_y = 0;
+	m_412_patient_local_z = 0;
+
+	m_412_patient_lat = 0;
+	m_412_patient_long = 0;
+	m_412_patient_elev = 0;
+
+	m_412_patient_loading_time = 0;
+
+	m_cm_say_timer = 0;
+	m_cm_say_state = 0;
 }
 
 
@@ -802,6 +888,8 @@ void HRM_PlugIn::MissionCancel()
 {
 	MissionReset();
 	pHRM->m_mission_state = HRM::State_Create_Mission;
+
+	if (m_patient_off != NULL) XPLMCommandOnce(m_patient_off);
 }
 
 void HRM_PlugIn::FSERegister()
@@ -860,6 +948,20 @@ void HRM_PlugIn::FSEFinishFlight()
 
 void HRM_PlugIn::Check412SAR()
 {
+}
+
+void HRM_PlugIn::IvyPlaySound(int sound_before, int say_value, int sound_after)
+{
+	static HRM_Sound hrm_sound;
+	if (m_ivy_id != XPLM_NO_PLUGIN_ID)
+	{
+		
+		hrm_sound.sound_before = sound_before;
+		hrm_sound.say_value = say_value;
+		hrm_sound.sound_after = sound_after;
+
+		XPLMSendMessageToPlugin(m_ivy_id, HRM_MESSAGE_SOUND_1, &hrm_sound);
+	}
 }
 
 void HRM_PlugIn::CreateFlightPlan()
@@ -1317,6 +1419,13 @@ void HRM_PlugIn::SaveConfig()
 
 	
 	pt.put("HRM.sling_load_plugin", m_sling_load_plugin);
+
+	pt.put("HRM.sling_load_distance", m_sling_load_distance);
+	pt.put("HRM.sling_load_time_min", m_sling_load_time_min);
+	pt.put("HRM.sling_say_distance", m_cm_sling_say_distance);
+	pt.put("HRM.sling_say_time", m_cm_sling_say_time);
+
+
 	pt.put("HRM.xslingload_treshold", m_xslingload_treshold);
 	pt.put("HRM.xslingload_weight_empty", m_xslingload_weight_empty);
 	pt.put("HRM.xslingload_weight_full", m_xslingload_weight_full);
@@ -1425,6 +1534,18 @@ void HRM_PlugIn::ReadConfig()
 	try { m_sling_load_plugin = pt.get<int>("HRM.sling_load_plugin"); }
 	catch (...) { HRMDebugString("Ini File: Entry not found."); }
 
+	try { m_sling_load_distance = pt.get<float>("HRM.sling_load_distance"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_sling_load_time_min = pt.get<float>("HRM.sling_load_time_min"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_cm_sling_say_distance = pt.get<float>("HRM.sling_say_distance"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_cm_sling_say_time = pt.get<float>("HRM.sling_say_time"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
 	try { m_xslingload_weight_empty = pt.get<float>("HRM.xslingload_weight_empty"); }
 	catch (...) { HRMDebugString("Ini File: Entry not found."); }
 
@@ -1530,12 +1651,22 @@ void HRM_PlugIn::ReadDataSlow()
 
 	//m_li_fse_flying = XPLMGetDatai(m_i_fse_flying);
 
+	m_ld_local_x = XPLMGetDatad(m_d_local_x);
+	m_ld_local_y = XPLMGetDatad(m_d_local_y);
+	m_ld_local_z = XPLMGetDatad(m_d_local_z);
+
+	m_lf_local_phi = XPLMGetDataf(m_f_local_phi)* M_PI / 180.0f;
+	m_lf_local_psi = XPLMGetDataf(m_f_local_psi)* M_PI / 180.0f;
+	m_lf_local_theta = XPLMGetDataf(m_f_local_theta)* M_PI / 180.0f;
+
 	m_lf_weight_max = XPLMGetDataf(m_f_weight_max);
 	m_lf_payload = XPLMGetDataf(m_f_payload);
 	m_lf_weight_total = XPLMGetDataf(m_f_weight_total);
 
 	m_li_on_ground = XPLMGetDatai(m_i_on_ground);
 	XPLMGetDatavi(m_ia_engines_running, m_lia_engines_running, 0, 2);
+	XPLMGetDatavi(m_ia_custom_slider_on, m_lia_custom_slider_on, 0, 24);
+	XPLMGetDatavf(m_fa_custom_slider_ratio, m_lfa_custom_slider_ratio, 0, 24);
 	m_lf_park_brake = XPLMGetDataf(m_f_park_brake);
 
 	m_lf_climb_rate = XPLMGetDataf(m_f_climb_rate);
@@ -1547,6 +1678,15 @@ void HRM_PlugIn::ReadDataSlow()
 	m_lf_jett_weight = XPLMGetDataf(m_f_jett_weight);
 
 	XPLMGetDatavf(m_fa_prop_ratio, m_lfa_prop_ratio, 0, 1);
+
+
+	m_lf_412_hook_x = XPLMGetDataf(m_f_412_hook_x);
+	m_lf_412_hook_y = XPLMGetDataf(m_f_412_hook_y);
+	m_lf_412_hook_z = XPLMGetDataf(m_f_412_hook_z);
+	m_lf_412_hook_cable_extended = XPLMGetDataf(m_f_412_hook_cable_extended);
+	m_lf_412_hook_cable_direction = XPLMGetDataf(m_f_412_hook_cable_direction);
+
+
 }
 
 
@@ -1627,12 +1767,25 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 
 				if ((m_sling_enable == true) && (m_sling_load_plugin == HRM::AB412) && (m_412sar_found == false))
 				{
-					if (m_patient_off == NULL) m_patient_off = XPLMFindCommand("412/buttons/PATIENT_off");
-					if (m_patient_ground == NULL) m_patient_ground = XPLMFindCommand("412/buttons/PATIENT_on_ground");
-					if (m_patient_transit == NULL) m_patient_transit = XPLMFindCommand("412/buttons/PATIENT_in_transit");
-					if (m_patient_board == NULL) m_patient_board = XPLMFindCommand("412/buttons/PATIENT_on_board");
-					if (m_operator_on == NULL) m_operator_on = XPLMFindCommand("412/buttons/CREW_on");
-					if (m_operator_off == NULL) m_operator_off = XPLMFindCommand("412/buttons/CREW_off");
+					if (m_patient_off == NULL)		m_patient_off =			XPLMFindCommand("412/buttons/PATIENT_off");
+					if (m_patient_ground == NULL)	m_patient_ground =		XPLMFindCommand("412/buttons/PATIENT_on_ground");
+					if (m_patient_transit == NULL)	m_patient_transit =		XPLMFindCommand("412/buttons/PATIENT_in_transit");
+					if (m_patient_board == NULL)	m_patient_board =		XPLMFindCommand("412/buttons/PATIENT_on_board");
+					if (m_operator_on == NULL)		m_operator_on =			XPLMFindCommand("412/buttons/CREW_on");
+					if (m_operator_off == NULL)		m_operator_off =		XPLMFindCommand("412/buttons/CREW_off");
+
+
+					if (m_f_412_hook_x == NULL) m_f_412_hook_x = XPLMFindDataRef("412/winch/hook_x");
+					if (m_f_412_hook_y == NULL) m_f_412_hook_y = XPLMFindDataRef("412/winch/hook_y");
+					if (m_f_412_hook_z == NULL) m_f_412_hook_z = XPLMFindDataRef("412/winch/hook_z");
+
+					if (m_f_412_hook_cable_extended == NULL) m_f_412_hook_cable_extended = XPLMFindDataRef("412/winch/cable_extendend_m");
+					if (m_lf_412_hook_cable_direction == NULL) m_f_412_hook_cable_direction =  XPLMFindDataRef("412/winch/cable_direction");
+
+					if (m_f_412_ext_lat == NULL)	m_f_412_ext_lat =	XPLMFindDataRef("412/external/lat");
+					if (m_f_412_ext_long == NULL)	m_f_412_ext_long =	XPLMFindDataRef("412/external/lon");
+					if (m_i_412_ext_set == NULL)	m_i_412_ext_set =	XPLMFindDataRef("412/external/set");
+
 
 					if (m_patient_off != NULL)
 					{
@@ -1849,6 +2002,9 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 					{
 						m_mission_flight1_countdown = 0;
 						m_mission_time_failed = true;
+
+						// Mission Failed
+						IvyPlaySound(10, -1, -1);
 					}
 
 					if (mp_cm_mission->IsSlingLoad() == true)
@@ -1880,11 +2036,15 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 
 								m_mission_at_patient_countdown = m_patient_countdown_value;
 								m_mission_state = HRM::State_At_Patient;
+								// Load Patient
+								IvyPlaySound(5, -1, -1);
 							}
 							else if ((m_lfa_prop_ratio[0] < m_cm_collective_min) && ((m_cm_autoconnect_fse == false) || (m_cm_enable_fse == false)))
 							{
 								m_mission_at_patient_countdown = m_patient_countdown_value;
 								m_mission_state = HRM::State_At_Patient;
+								// Load Patient
+								IvyPlaySound(5, -1, -1);
 							}
 
 
@@ -1892,6 +2052,280 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 
 						}
 					}
+				}
+					
+				if (mp_cm_mission->IsSlingLoad() == true)
+				{
+
+					if (m_sling_load_plugin == HRM::AB412)
+					{
+
+						m_412_patient_distance = calc_distance_m(m_ld_latitude, m_ld_longitude, mp_cm_waypoint->latitude, mp_cm_waypoint->longitude);
+
+						if (m_412_probe == NULL) m_412_probe = XPLMCreateProbe(xplm_ProbeY);
+
+						if (m_412_patient_status == HRM::Patient_Off)
+						{
+							XPLMCommandOnce(m_patient_ground);
+							m_412_patient_status = HRM::Patient_Ground;
+						}
+						
+
+						if ((m_412_patient_distance > 300) || ((m_412_patient_local_x == 0) && (m_412_patient_local_y == 0) && (m_412_patient_local_z == 0)))
+						{
+							// Set 412 patient position
+							XPLMSetDatai(m_i_412_ext_set, 1);
+
+
+							// Calculate patient coordinates
+							double zero_x, zero_y, zero_z;
+							XPLMWorldToLocal(mp_cm_waypoint->latitude, mp_cm_waypoint->longitude, 0, &zero_x, &zero_y, &zero_z);
+
+							double local_x = 0, local_y = 0, local_z = 0;
+
+							local_x = zero_x;
+							local_z = zero_z;
+
+
+							XPLMProbeInfo_t info;
+							info.structSize = sizeof(info);
+
+							XPLMProbeResult result = XPLMProbeTerrainXYZ(m_412_probe, zero_x, zero_y, zero_z, &info);
+
+							m_412_patient_local_x = info.locationX;
+							m_412_patient_local_y = info.locationY;
+							m_412_patient_local_z = info.locationZ;
+
+							XPLMLocalToWorld(m_412_patient_local_x, m_412_patient_local_y, m_412_patient_local_z, &m_412_patient_lat, &m_412_patient_long, &m_412_patient_elev);
+
+
+						}
+						// When close to patient
+						else
+						{
+							// Set Doors
+							if ((m_lfa_custom_slider_ratio[1] < 1.0f) && (m_lfa_custom_slider_ratio[3] < 1.0f))
+							{
+								int door_pos = 1;
+
+								XPLMSetDatavi(m_ia_custom_slider_on, &door_pos, 1, 1);
+								XPLMSetDatavi(m_ia_custom_slider_on, &door_pos, 3, 1);
+							}
+							//Set Operator
+							else if (m_412_crew_on == false)
+							{
+								XPLMCommandOnce(m_operator_on);
+								// Operator in Position
+								IvyPlaySound(11, -1, -1);
+								m_412_crew_on = true;
+							}
+
+							// Calculate Winch Position in OpenGL Coordinates
+							double x_phi = m_lf_412_hook_x * cos(m_lf_local_phi) + m_lf_412_hook_y * sin(m_lf_local_phi);
+							double y_phi = m_lf_412_hook_y * cos(m_lf_local_phi) - m_lf_412_hook_x * sin(m_lf_local_phi);
+							double z_phi = m_lf_412_hook_z + 0.3f;
+							double x_the = x_phi;
+							double y_the = y_phi * cos(m_lf_local_theta) - z_phi * sin(m_lf_local_theta);
+							double z_the = z_phi * cos(m_lf_local_theta) + y_phi * sin(m_lf_local_theta);
+							double x_winch_offset = x_the * cos(m_lf_local_psi) - z_the * sin(m_lf_local_psi);
+							double y_winch_offset = y_the;
+							double z_winch_offset = z_the * cos(m_lf_local_psi) + x_the * sin(m_lf_local_psi);
+
+							double x_winch = x_winch_offset + m_ld_local_x;
+							double y_winch = y_winch_offset + m_ld_local_y;
+							double z_winch = z_winch_offset + m_ld_local_z;
+
+							double op_lat = 0;
+							double op_long = 0;
+							double op_elev = 0;
+
+							// Calcualte Operator Position in OpenGL and World Coodinates
+							XPLMLocalToWorld(x_winch, y_winch, z_winch, &op_lat, &op_long, &op_elev);
+							op_elev -= m_lf_412_hook_cable_extended + 1.2;
+							XPLMWorldToLocal(op_lat, op_long, op_elev, &x_winch, &y_winch, &z_winch);
+
+							
+							// Calculate heading of our patient relative to our aircraft
+							float delta_lat = m_412_meter_lat * (op_lat - m_412_patient_lat);
+							float delta_long = m_412_meter_long * (op_long - m_412_patient_long);
+							float heading = atan2(delta_long, delta_lat) * 180.0f / M_PI;
+							m_412_patient_heading = heading - m_lf_heading -180;
+
+							if (m_412_patient_heading < 0) m_412_patient_heading += 360.0f;
+							if (m_412_patient_heading < 0) m_412_patient_heading += 360.0f;
+
+							double patient_offset_x = abs(m_412_patient_local_x - x_winch);
+							double patient_offset_y = abs(m_412_patient_local_y - y_winch);
+							double patient_offset_z = abs(m_412_patient_local_z - z_winch);
+
+							double patient_distance_h = sqrt((patient_offset_x * patient_offset_x) + (patient_offset_z * patient_offset_z));
+							
+							m_412_patient_distance = sqrt((patient_offset_x * patient_offset_x) + (patient_offset_y * patient_offset_y) + (patient_offset_z * patient_offset_z));
+
+							// Calculate offset of our operator relative to the patient in aircraft coordinates
+							m_412_patient_distance_side = patient_distance_h * sin(m_412_patient_heading * M_PI / 180.0f);
+							m_412_patient_distance_forward = patient_distance_h * cos(m_412_patient_heading * M_PI / 180.0f);
+							m_412_patient_distance_alt = op_elev - m_412_patient_elev;
+
+
+							// Speech output
+							if ((m_412_patient_distance <= m_cm_sling_say_distance) && (m_412_crew_on == true))
+							{
+								m_cm_say_timer += m_time_delta;
+
+								if (m_cm_say_timer >= m_cm_sling_say_time)
+								{
+									//m_cm_say_state
+
+									int forward = (int)m_412_patient_distance_forward;
+									int side = (int)m_412_patient_distance_side;
+									int alt = (int)m_412_patient_distance_alt;
+
+
+
+									if (patient_distance_h > m_cm_distance_h_max)
+									{
+										if (m_cm_say_state == 0)
+										{
+											if (forward > 0) IvyPlaySound(-1, forward, 13);
+											else if (forward < 0) IvyPlaySound(-1, abs(forward), 15);
+											else IvyPlaySound(-1, -1, 14);
+										}
+										else if (m_cm_say_state == 1)
+										{
+											if (side > 0) IvyPlaySound(-1, side, 18);
+											else if (side < 0) IvyPlaySound(-1, abs(side), 16);
+											else IvyPlaySound(-1, -1, 17);
+										}
+									}
+									else if (m_412_patient_distance > m_sling_load_distance)
+									{
+										if (m_412_patient_distance_alt > 0)	IvyPlaySound(-1, abs(alt), 19);
+										else if (m_412_patient_distance_alt < 0)	IvyPlaySound(-1, abs(alt), 34);
+										else	IvyPlaySound(-1, abs(alt), 20);
+									}
+
+
+
+									m_cm_say_timer = 0;
+									m_cm_say_state++;
+									if (m_cm_say_state > 1) m_cm_say_state = 0;
+
+								}
+							}
+
+
+							if (m_412_patient_distance <= m_sling_load_distance)
+							{
+								if (m_412_patient_loading_time == 0)
+								{
+									if (m_lf_412_hook_cable_direction != 0)
+									{
+										// Say stop winch
+										IvyPlaySound(20, -1, -1);
+									}
+									else
+									{
+										// Say loading patient
+										IvyPlaySound(21, -1, -1);
+									}
+								}
+								m_412_patient_loading_time += m_time_delta;
+
+								if (m_412_patient_loading_time >= m_sling_load_time_min)
+								{
+									m_mission_state = HRM::State_At_Patient;
+								}
+							}
+							else
+							{
+								if (m_412_patient_loading_time != 0)
+								{
+									// Loading patient failed
+									IvyPlaySound(22, -1, -1);
+								}
+
+								m_412_patient_loading_time = 0;
+							}
+
+
+						}
+
+						/*
+						
+
+						//if (m_412_patient_distance < 50)
+						{
+
+							float delta_lat = -1 * m_412_meter_lat * (m_ld_latitude - mp_cm_waypoint->latitude);
+							float delta_long = m_412_meter_long * (m_ld_longitude - mp_cm_waypoint->longitude);
+
+
+							float heading = atan2(delta_long, delta_lat) * 180.0f / M_PI;
+
+							m_412_patient_heading = heading - m_lf_heading;
+
+							if (m_412_patient_heading < 0) m_412_patient_heading += 360.0f;
+
+							m_412_patient_distance_side = m_412_patient_distance * sin(m_412_patient_heading * M_PI / 180.0f);
+							m_412_patient_distance_forward = m_412_patient_distance * cos(m_412_patient_heading * M_PI / 180.0f);
+
+
+							m_412_patient_distance_alt = 0;
+						}
+
+
+						// Winch Position in OpenGL Coordinates
+
+						double x_phi = m_lf_412_hook_x * cos(m_lf_local_phi) + m_lf_412_hook_y * sin(m_lf_local_phi);
+						double y_phi = m_lf_412_hook_y * cos(m_lf_local_phi) - m_lf_412_hook_x * sin(m_lf_local_phi);
+						double z_phi = m_lf_412_hook_z + 0.3f;
+						double x_the = x_phi;
+						double y_the = y_phi * cos(m_lf_local_theta) - z_phi * sin(m_lf_local_theta);
+						double z_the = z_phi * cos(m_lf_local_theta) + y_phi * sin(m_lf_local_theta);
+						double x_winch_offset = x_the * cos(m_lf_local_psi) - z_the * sin(m_lf_local_psi);
+						double y_winch_offset = y_the;
+						double z_winch_offset = z_the * cos(m_lf_local_psi) + x_the * sin(m_lf_local_psi);
+
+						double x_winch = x_winch_offset + m_ld_local_x;
+						double y_winch = y_winch_offset + m_ld_local_y;
+						double z_winch = z_winch_offset + m_ld_local_z;
+
+						double op_lat = 0;
+						double op_long = 0;
+						double op_elev = 0;
+
+
+						XPLMLocalToWorld(x_winch, y_winch, z_winch, &op_lat, &op_long, &op_elev);
+						op_elev -= m_lf_412_hook_cable_extended + 1.2;
+						XPLMWorldToLocal(op_lat, op_long, op_elev, &x_winch, &y_winch, &z_winch);
+
+						// Debug: Draw Object
+						XPLMDrawInfo_t		dr;
+						dr.structSize = sizeof(dr);
+						dr.x = x_winch;
+						dr.y = y_winch;
+						dr.z = z_winch;
+						dr.pitch = 0;
+						dr.heading = 0;
+						dr.roll = 0;
+
+						static float m_angle = 0;
+						XPLMInstanceSetPosition(m_412_inst_ref, &dr, &m_angle);
+
+
+						// open doors
+						int door_pos = 1;
+
+						XPLMSetDatavi(m_ia_custom_slider_on, &door_pos, 1, 1);
+						XPLMSetDatavi(m_ia_custom_slider_on, &door_pos, 3, 1);*/
+
+
+					}
+
+
+
+
 				}
 			}
 			else if (m_mission_state == HRM::State_At_Patient)
@@ -1917,10 +2351,14 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 
 						if (mp_cm_mission != NULL) mp_cm_mission->RemovePatients();
 						MissionStartFlight2();
+						// Patient on board
+						IvyPlaySound(6, -1, -1);
 					}
 				}
 				else
 				{
+					// Loading Patient failed
+					IvyPlaySound(22, -1, -1);
 					m_mission_state = HRM::State_Flight_1;
 				}
 
@@ -1937,6 +2375,8 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 					{
 						m_mission_flight2_countdown = 0;
 						m_mission_time_failed = true;
+						// Mission Failed
+						IvyPlaySound(10, -1, -1);
 					}
 				}
 				else
@@ -1959,6 +2399,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 
 							m_mission_at_hospital_countdown = m_hospital_countdown_value;
 							m_mission_state = HRM::State_At_Hospital;
+							
 						}
 
 						// Normal Mode
@@ -1967,9 +2408,31 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 
 							m_mission_at_hospital_countdown = m_hospital_countdown_value;
 							m_mission_state = HRM::State_At_Hospital;
+
+							// Unloading Patient
+							IvyPlaySound(7, -1, -1);
 						}
 					}
 				}
+
+				if ((mp_cm_mission->IsSlingLoad() == true) && (m_sling_load_plugin == HRM::AB412));
+				{
+					if ((m_lf_412_hook_cable_extended == 0) && (m_412_patient_status == HRM::Patient_Transit))
+					{
+						XPLMCommandOnce(m_patient_board);
+						m_412_patient_status = HRM::Patient_OnBoard;
+
+						XPLMCommandOnce(m_operator_off);
+						IvyPlaySound(6, -1, -1);
+						m_412_crew_on = false;
+
+						int door_pos = 0;
+						XPLMSetDatavi(m_ia_custom_slider_on, &door_pos, 1, 1);
+						XPLMSetDatavi(m_ia_custom_slider_on, &door_pos, 3, 1);
+					}
+					
+				}
+
 			}
 			else if (m_mission_state == HRM::State_At_Hospital)
 			{
