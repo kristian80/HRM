@@ -139,6 +139,8 @@ void HRMImguiWidget::buildInterface()
 		if (ImGui::RadioButton("XP10", pHRM->m_flight_plan_format == HRM::FPL_XP10))		pHRM->m_flight_plan_format = HRM::FPL_XP10;
 		if (ImGui::RadioButton("GTN GFP", pHRM->m_flight_plan_format == HRM::FPL_GTN))		pHRM->m_flight_plan_format = HRM::FPL_GTN;
 
+		
+
 		ImGui::Checkbox("Adjust Payload", &(pHRM->m_adjust_payload));
 
 		ImGui::NextColumn();
@@ -251,6 +253,29 @@ void HRMImguiWidget::buildInterface()
 		}
 
 		ImGui::Columns(1, 0, true);
+
+		if (pHRM->m_flight_plan_format == HRM::FPL_GTN)
+		{
+			ImGui::Spacing();
+			ImGui::InputText("Dep ICAO", &(pHRM->m_cm_departure_icao));
+			if (pHRM->m_mission_departure_icao_found == true)
+			{
+				ImGui::PushStyleColor(ImGuiCol_Text, color_green);
+				ImGui::Text(pHRM->m_mission_departure_icao_name.c_str());
+				ImGui::PopStyleColor();
+			}
+			else
+			{
+				ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+				ImGui::Text("ICAO NOT Found");
+				ImGui::PopStyleColor();
+			}
+
+
+			ImGui::InputText("GFP Path", &(pHRM->m_gfp_path));
+			ImGui::InputText("WPT Path", &(pHRM->m_wpt_path));
+		}
+
 		ImGui::Spacing();
 		ImGui::Separator();
 		ImGui::Spacing();

@@ -35,6 +35,10 @@ public:
 	std::string m_scenery_file = "";
 	std::string m_config_path = "";
 	std::string m_fms_file = "";
+	std::string m_gfp_path = "";
+	std::string m_gfp_file = "hrm.gfp";
+	std::string m_wpt_path = "";
+	std::string m_wpt_file = "user.wpt";
 
 	std::string m_xslingload_ini_path = "";
 	std::string m_xslingload_apt_path = "";
@@ -122,6 +126,7 @@ public:
 	float m_cm_sling_say_time = 3.5;
 
 	std::string m_cm_hospital_icao = "";
+	std::string m_cm_departure_icao = "";
 
 	int m_difficutly = HRM::Normal;
 	float m_position_calc_rate = 0.5;
@@ -242,11 +247,16 @@ public:
 	float m_mission_time = 0;
 	bool m_mission_time_failed = false;
 
+	bool m_mission_departure_icao_found = false;
 	bool m_mission_scenario_icao_found = false;
 	bool m_mission_hospital_icao_found = false;
 
+	std::string m_mission_departure_icao_name = "";
 	std::string m_mission_scenario_icao_name = "";
 	std::string m_mission_hospital_icao_name = "";
+
+	float m_mission_departure_lat = HRM::coord_invalid;
+	float m_mission_departure_long = HRM::coord_invalid;
 
 	float m_mission_scenario_lat = HRM::coord_invalid;
 	float m_mission_scenario_long = HRM::coord_invalid;

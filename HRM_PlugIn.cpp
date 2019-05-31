@@ -89,6 +89,9 @@ void HRM_PlugIn::PluginStart()
 	m_xslingload_ini_path = m_system_path + "Resources" + m_ds + "plugins" + m_ds + "xslingload" + m_ds + "xslingload.ini";
 	m_xslingload_apt_path = m_system_path + "Resources" + m_ds + "plugins" + m_ds + "xslingload" + m_ds + "apt.dat";
 
+	m_gfp_path = m_system_path + "Output" + m_ds + "FMS plans";
+	m_wpt_path = m_system_path + "Custom Data";
+
 
 	srand(time(NULL));
 
@@ -345,6 +348,12 @@ void HRM_PlugIn::MissionCreate()
 	if (m_mission_scenario_long == HRM::coord_invalid) return;
 	if (m_mission_hospital_lat == HRM::coord_invalid) return;
 	if (m_mission_hospital_long == HRM::coord_invalid) return;
+
+	if (m_flight_plan_format == HRM::FPL_GTN)
+	{
+		if (m_mission_departure_lat == HRM::coord_invalid) return;
+		if (m_mission_departure_long == HRM::coord_invalid) return;
+	}
 
 	// Get the random mission type and the corresponding waypoint vector. Bit more complicated since some might not be enabled
 
@@ -966,21 +975,116 @@ void HRM_PlugIn::IvyPlaySound(int sound_before, int say_value, int sound_after)
 
 void HRM_PlugIn::CreateFlightPlan()
 {
-	std::ofstream fms_file;
-	fms_file.open(m_fms_file, std::ios::out);
-
-	if (fms_file.is_open())
+	if (m_flight_plan_format == HRM::FPL_XP11)
 	{
-		fms_file << "I" << std::endl;
-		fms_file << "1100 Version" << std::endl;
-		fms_file << "CYCLE " << m_cm_airac_cycle << std::endl;
-		fms_file << "DEP " << std::endl;
-		fms_file << "DES " << std::endl;
-		fms_file << "NUMENR 3" << std::endl;
+		std::ofstream fms_file;
+		fms_file.open(m_fms_file, std::ios::out);
 
-		fms_file.precision(9);
+		if (fms_file.is_open())
+		{
+			fms_file << "I" << std::endl;
+			fms_file << "1100 Version" << std::endl;
+			fms_file << "CYCLE " << m_cm_airac_cycle << std::endl;
+			fms_file << "DEP " << std::endl;
+			fms_file << "DES " << std::endl;
+			fms_file << "NUMENR 3" << std::endl;
 
-		fms_file  << "28 " << "START DEP 25000.000000 " << m_ld_latitude << " " << m_ld_longitude<< std::endl;
+			fms_file.precision(9);
+
+			fms_file << "28 " << "START DEP 25000.000000 " << m_ld_latitude << " " << m_ld_longitude << std::endl;
+
+			double wp_latitude = mp_cm_waypoint->latitude;
+			double wp_longitude = mp_cm_waypoint->longitude;
+
+			if (m_cm_estmimated_wp == true)
+			{
+				double deviation_lat_meter = (rand() % m_cm_estimated_radius_m) - (m_cm_estimated_radius_m / 2);
+				double deviation_long_meter = (rand() % m_cm_estimated_radius_m) - (m_cm_estimated_radius_m / 2);
+
+				double meter_latitude = 0;
+				double meter_longitude = 0;
+
+				HRM_Object::GetDegreesPerMeter(mp_cm_waypoint->latitude, mp_cm_waypoint->longitude, meter_latitude, meter_longitude);
+
+				wp_latitude += deviation_lat_meter * meter_latitude;
+				wp_longitude += deviation_long_meter * meter_longitude;
+			}
+
+			fms_file << "28 " << "SCENE DEP 25000.000000 " << wp_latitude << " " << wp_longitude << std::endl;
+
+			fms_file << "28 " << "HOSP DEP 25000.000000 " << m_mission_hospital_lat << " " << m_mission_hospital_long << std::endl;
+
+
+			fms_file.close();
+		}
+		else
+		{
+			HRMDebugString("Could not write FMS file");
+		}
+	}
+	else if (m_flight_plan_format == HRM::FPL_XP10)
+	{
+		std::ofstream fms_file;
+		fms_file.open(m_fms_file, std::ios::out);
+
+		if (fms_file.is_open())
+		{
+			fms_file << "I" << std::endl;
+			fms_file << "3 version" << std::endl;
+			/*fms_file << "CYCLE " << m_cm_airac_cycle << std::endl;
+			fms_file << "DEP " << std::endl;
+			fms_file << "DES " << std::endl;
+			fms_file << "NUMENR 3" << std::endl;*/
+
+			fms_file.precision(9);
+
+			fms_file << "1 " << "START 25000.000000 " << m_ld_latitude << " " << m_ld_longitude << std::endl;
+
+			double wp_latitude = mp_cm_waypoint->latitude;
+			double wp_longitude = mp_cm_waypoint->longitude;
+
+			if (m_cm_estmimated_wp == true)
+			{
+				double deviation_lat_meter = (rand() % m_cm_estimated_radius_m) - (m_cm_estimated_radius_m / 2);
+				double deviation_long_meter = (rand() % m_cm_estimated_radius_m) - (m_cm_estimated_radius_m / 2);
+
+				double meter_latitude = 0;
+				double meter_longitude = 0;
+
+				HRM_Object::GetDegreesPerMeter(mp_cm_waypoint->latitude, mp_cm_waypoint->longitude, meter_latitude, meter_longitude);
+
+				wp_latitude += deviation_lat_meter * meter_latitude;
+				wp_longitude += deviation_long_meter * meter_longitude;
+			}
+
+			fms_file << "1 " << "SCENE 25000.000000 " << wp_latitude << " " << wp_longitude << std::endl;
+
+			fms_file << "1 " << "HOSP 25000.000000 " << m_mission_hospital_lat << " " << m_mission_hospital_long << std::endl;
+
+
+			fms_file.close();
+		}
+		else
+		{
+			HRMDebugString("Could not write FMS file");
+		}
+	}
+	else if (m_flight_plan_format == HRM::FPL_GTN)
+	{
+		std::string gtn_file_name = m_gfp_path + m_ds + m_gfp_file;
+
+		std::ofstream fms_file;
+		fms_file.open(gtn_file_name, std::ios::out);
+
+		if (fms_file.is_open())
+		{
+			fms_file << "FPN/RI:F:" << m_cm_departure_icao << ":F:HRMSCENE:F:" << m_cm_hospital_icao << std::endl;
+			fms_file.close();
+		}
+		else
+		{
+			HRMDebugString("Could not write GFP file");
+		}
 
 		double wp_latitude = mp_cm_waypoint->latitude;
 		double wp_longitude = mp_cm_waypoint->longitude;
@@ -999,16 +1103,73 @@ void HRM_PlugIn::CreateFlightPlan()
 			wp_longitude += deviation_long_meter * meter_longitude;
 		}
 
-		fms_file  << "28 " << "SCENE DEP 25000.000000 " << wp_latitude << " " << wp_longitude << std::endl;
+		std::string wpt_file_name = m_wpt_path + m_ds + m_wpt_file;
+		std::ifstream wpt_file_in;
+		std::string out_buffer = "";
+		std::string line_string = "";
 
-		fms_file  << "28 " << "HOSP DEP 25000.000000 " << m_mission_hospital_lat << " " << m_mission_hospital_long << std::endl;
+		bool departure_found = false;
+		bool scenario_found = false;
+		bool hospital_found = false;
 
+		wpt_file_in.open(wpt_file_name, std::ios::in);
 
-		fms_file.close();
-	}
-	else
-	{
-		HRMDebugString("Could not write FMS file");
+		while (std::getline(wpt_file_in, line_string))
+		{
+			if ((line_string.find(m_cm_departure_icao)) != std::string::npos)
+			{
+				out_buffer += m_cm_departure_icao + ",," + std::to_string(m_mission_departure_lat) + "," + std::to_string(m_mission_departure_long) + "\n";
+				departure_found = true;
+				if (m_cm_departure_icao.compare(m_cm_hospital_icao) == 0)
+					hospital_found = true;
+			}
+			else if ((line_string.find(m_cm_hospital_icao)) != std::string::npos)
+			{
+				out_buffer += m_cm_hospital_icao + ",," + std::to_string(m_mission_hospital_lat) + "," + std::to_string(m_mission_hospital_long) + "\n";
+				hospital_found = true;
+			}
+			else if ((line_string.find("HRMSCENE")) != std::string::npos)
+			{
+				out_buffer += "HRMSCENE,," + std::to_string(wp_latitude) + "," + std::to_string(wp_longitude) + "\n";
+				scenario_found = true;
+			}
+			else
+			{
+				out_buffer += line_string + "\n";
+			}
+		}
+
+		wpt_file_in.close();
+
+		if (departure_found == false)
+		{
+			out_buffer += m_cm_departure_icao + ",," + std::to_string(m_mission_departure_lat) + "," + std::to_string(m_mission_departure_long) + "\n";
+		}
+
+		if (hospital_found == false)
+		{
+			out_buffer += m_cm_hospital_icao + ",," + std::to_string(m_mission_hospital_lat) + "," + std::to_string(m_mission_hospital_long) + "\n";
+		}
+
+		if (scenario_found  == false)
+		{
+			out_buffer += "HRMSCENE,," + std::to_string(wp_latitude) + "," + std::to_string(wp_longitude) + "\n";
+		}
+
+		std::ofstream wpt_file_out;
+
+		wpt_file_out.open(wpt_file_name, std::ios::out);
+
+		if (wpt_file_out.is_open())
+		{
+			wpt_file_out << out_buffer;
+			wpt_file_out.close();
+		}
+		else
+		{
+			HRMDebugString("Could not write user.wpt file");
+		}
+
 	}
 
 }
@@ -1380,6 +1541,10 @@ void HRM_PlugIn::SaveConfig()
 	//pt.push_back("HRM.", );
 
 
+	
+	pt.put("HRM.gfp_file_path", m_gfp_path);
+	pt.put("HRM.user_wpt_file_path", m_wpt_path);
+
 	pt.put("HRM.global_path_index", m_global_path_index);
 
 	if (m_global_path_index < m_path_vector.size())
@@ -1405,6 +1570,7 @@ void HRM_PlugIn::SaveConfig()
 	pt.put("HRM.scenario_position_type", (int) m_cm_use_position);
 	pt.put("HRM.scenario_min_distance_nm", m_cm_min_distance);
 	pt.put("HRM.scenario_max_distance_nm", m_cm_max_distance);
+	pt.put("HRM.departure_icao", m_cm_departure_icao);
 	pt.put("HRM.scenario_icao", m_cm_scenario_icao);
 	pt.put("HRM.hospital_icao", m_cm_hospital_icao);
 	pt.put("HRM.panic_call_enabled", m_cm_estmimated_wp);
@@ -1495,6 +1661,9 @@ void HRM_PlugIn::ReadConfig()
 	try { m_cm_max_distance = pt.get<int>("HRM.scenario_max_distance_nm"); }
 	catch (...) { HRMDebugString("Ini File: Entry not found."); }
 
+	try { m_cm_departure_icao = pt.get<std::string>("HRM.departure_icao"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
 	try { m_cm_scenario_icao = pt.get<std::string>("HRM.scenario_icao"); }
 	catch (...) { HRMDebugString("Ini File: Entry not found."); }
 
@@ -1563,6 +1732,13 @@ void HRM_PlugIn::ReadConfig()
 
 	try { m_xslingload_object_path = pt.get<std::string>("HRM.xslingload_object_path"); }
 	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_gfp_path = pt.get<std::string>("HRM.gfp_file_path"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_wpt_path = pt.get<std::string>("HRM.user_wpt_file_path"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
 }
 
 void HRM_PlugIn::SaveMissions()
@@ -1800,6 +1976,64 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 					
 				}
 
+				// Find GTN Airport
+				if (m_flight_plan_format == HRM::FPL_GTN)
+				{
+					bool departure_search_finished = false;
+					bool departure_navaid_found = false;
+
+					XPLMNavRef nav_departure = XPLM_NAV_NOT_FOUND;
+
+					if (m_cm_departure_icao.size() > 2)
+					{
+						nav_departure = XPLMFindFirstNavAidOfType(xplm_Nav_Airport);
+
+						XPLMNavType nav_type_departure = xplm_Nav_Airport;
+
+
+						for (int index = 0; (departure_search_finished == false) && (departure_navaid_found == false); index++)
+						{
+							if (index == 0) nav_departure = XPLMFindFirstNavAidOfType(xplm_Nav_Airport);
+							else nav_departure = XPLMGetNextNavAid(nav_departure);
+
+							if (nav_departure != XPLM_NAV_NOT_FOUND)
+							{
+								char buffer[2048];
+
+								float lat_s;
+								float long_s;
+								XPLMGetNavAidInfo(nav_departure, &nav_type_departure, &lat_s, &long_s, NULL, NULL, NULL, buffer, NULL, NULL);
+
+								m_mission_departure_lat = lat_s;
+								m_mission_departure_long = long_s;
+
+								if (nav_type_departure != xplm_Nav_Airport)			departure_search_finished = true;
+								else if (m_cm_departure_icao.compare(buffer) == 0)	departure_navaid_found = true;
+
+							}
+							else
+							{
+								departure_search_finished = true;
+							}
+						}
+					}
+
+					if ((nav_departure != XPLM_NAV_NOT_FOUND) && (departure_navaid_found == true))
+					{
+						char buffer[2048];
+						XPLMGetNavAidInfo(nav_departure, NULL, &m_mission_departure_lat, &m_mission_departure_long, NULL, NULL, NULL, NULL, buffer, NULL);
+						m_mission_departure_icao_name = buffer;
+						m_mission_departure_icao_found = true;
+					}
+					else
+					{
+						m_mission_departure_icao_found = false;
+						m_mission_departure_icao_name = "";
+						m_mission_departure_lat = HRM::coord_invalid;
+						m_mission_departure_long = HRM::coord_invalid;
+					}
+				}
+
 
 				// ICAO Computation
 				if (pHRM->m_cm_use_position == HRM::Scenairo_Aircraft)
@@ -1810,6 +2044,9 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 				// Search for Scenario ICAO
 				else
 				{
+					
+
+
 					// Find X-Plane Airport 
 					if (m_cm_enable_fse == false)
 					{
