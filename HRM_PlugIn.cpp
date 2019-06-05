@@ -36,7 +36,7 @@ HRM_PlugIn::HRM_PlugIn() :
 	m_path_vector.push_back("BaseMesh");
 	m_path_vector.push_back("Ortho4XP");
 	m_path_vector.push_back("ZonePhoto");
-	//m_path_vector.push_back("ForkBoy");
+	m_path_vector.push_back("ORBX");
 
 	m_global_path = m_path_vector[0];
 	m_global_path_index = 0;
@@ -1547,10 +1547,7 @@ void HRM_PlugIn::SaveConfig()
 
 	pt.put("HRM.global_path_index", m_global_path_index);
 
-	if (m_global_path_index < m_path_vector.size())
-	{
-		m_global_path = m_path_vector[m_global_path_index];
-	}
+	
 
 	pt.put("HRM.flight_plan_format", m_flight_plan_format);
 
@@ -1618,6 +1615,11 @@ void HRM_PlugIn::ReadConfig()
 
 	try { m_global_path_index = pt.get<int>("HRM.global_path_index"); }
 	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	if (m_global_path_index < m_path_vector.size())
+	{
+		m_global_path = m_path_vector[m_global_path_index];
+	}
 
 	try { m_flight_plan_format = pt.get<int>("HRM.flight_plan_format"); }
 	catch (...) { HRMDebugString("Ini File: Entry not found."); }
@@ -2305,6 +2307,16 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 						{
 							XPLMCommandOnce(m_patient_ground);
 							m_412_patient_status = HRM::Patient_Ground;
+						}
+
+						if (m_412_patient_distance > 100)
+						{
+							static bool set_position = true;
+							// Set 412 patient position
+							if (set_position == true) XPLMSetDatai(m_i_412_ext_set, 1);
+							else XPLMCommandOnce(m_patient_ground);
+							set_position = !set_position;
+
 						}
 						
 
