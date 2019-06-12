@@ -36,6 +36,7 @@ HRM_PlugIn::HRM_PlugIn() :
 	m_path_vector.push_back("BaseMesh");
 	m_path_vector.push_back("Ortho4XP");
 	m_path_vector.push_back("ZonePhoto");
+	m_path_vector.push_back("Forkboy");
 	m_path_vector.push_back("ORBX");
 
 	m_global_path = m_path_vector[0];
