@@ -90,8 +90,8 @@ void HRM_PlugIn::PluginStart()
 	m_xslingload_ini_path = m_system_path + "Resources" + m_ds + "plugins" + m_ds + "xslingload" + m_ds + "xslingload.ini";
 	m_xslingload_apt_path = m_system_path + "Resources" + m_ds + "plugins" + m_ds + "xslingload" + m_ds + "apt.dat";
 
-	m_gfp_path = m_system_path + "Output" + m_ds + "FMS plans";
-	m_wpt_path = m_system_path + "Custom Data";
+	m_gfp_path = "\\ProgramData\\Garmin\\Trainers\\Database";
+	m_wpt_path = "\\ProgramData\\Garmin\\Trainers\\Database";
 
 
 	srand(time(NULL));
@@ -747,7 +747,7 @@ void HRM_PlugIn::MissionStartFlight2()
 		XPLMCommandOnce(m_patient_transit);
 		m_412_patient_status = HRM::Patient_Transit;
 		// Patient loaded
-		IvyPlaySound(12, -1, -1);
+		//IvyPlaySound(12, -1, -1);
 	}
 
 
@@ -1032,10 +1032,10 @@ void HRM_PlugIn::CreateFlightPlan()
 		{
 			fms_file << "I" << std::endl;
 			fms_file << "3 version" << std::endl;
-			/*fms_file << "CYCLE " << m_cm_airac_cycle << std::endl;
+			//fms_file << "CYCLE " << m_cm_airac_cycle << std::endl;
 			fms_file << "DEP " << std::endl;
 			fms_file << "DES " << std::endl;
-			fms_file << "NUMENR 3" << std::endl;*/
+			//fms_file << "NUMENR 3" << std::endl;
 
 			fms_file.precision(9);
 
