@@ -90,7 +90,7 @@ void HRMImguiWidget::buildInterface()
 
 	//static int radio_path = 0;
 
-	ImGui::Text(std::to_string(pHRM->m_processing_time).c_str());
+	//ImGui::Text(std::to_string(pHRM->m_processing_time).c_str());
 
 	if (pHRM->m_mission_state == HRM::State_Create_Mission)
 	{
