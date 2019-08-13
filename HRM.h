@@ -60,6 +60,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/property_tree/ini_parser.hpp>
+#include <boost/algorithm/string/replace.hpp>
 
 // OS X: we use this to convert our file path.
 #if APL

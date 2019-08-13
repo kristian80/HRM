@@ -1,1 +1,1 @@
-xcopy /s "Debug\plugins" "G:\X-Plane 11\Resources\plugins"
+xcopy /s "Debug\plugins" "D:\X-Plane 11\Resources\plugins"

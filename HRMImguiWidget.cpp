@@ -35,6 +35,8 @@ HRMImguiWidget::HRMImguiWidget(HRM_PlugIn *pHRMNew, int left, int top, int right
 	SetWindowTitle("Helicopter Rescue Missions");
 	SetVisible(false);
 	//configureImguiContext();
+
+	pHRM->m_window_visible = false;
 }
 
 
@@ -60,6 +62,7 @@ void HRMImguiWidget::configureImguiContext()
 
 void HRMImguiWidget::Visible(bool visible)
 {
+	pHRM->m_window_visible = visible;
 	SetVisible(visible);
 	if (visible)
 	{
@@ -86,6 +89,8 @@ void HRMImguiWidget::buildInterface()
 	ImVec4 color_green = ImColor(0, 255, 0);
 
 	//static int radio_path = 0;
+
+	ImGui::Text(std::to_string(pHRM->m_processing_time).c_str());
 
 	if (pHRM->m_mission_state == HRM::State_Create_Mission)
 	{
@@ -330,7 +335,8 @@ void HRMImguiWidget::buildInterface()
 		ImGui::PushStyleColor(ImGuiCol_Text, color_green);
 		ImGui::TextWrapped("You have now time for detailed flight planning.");
 		ImGui::TextWrapped("The mission flight plan was saved under following path:");
-		ImGui::TextWrapped(pHRM->m_fms_file.c_str());
+		if (pHRM->m_flight_plan_format == HRM::FPL_GTN)		ImGui::TextWrapped(pHRM->m_gfp_path.c_str());
+		else												ImGui::TextWrapped(pHRM->m_fms_file.c_str());
 		ImGui::TextWrapped("Feel free to load it into your flight planning software to create a more detailed route.");
 		ImGui::PopStyleColor();
 

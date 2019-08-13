@@ -16,7 +16,7 @@
  */
 
 #include "HRM_PlugIn.h"
-
+#include <chrono>
 
 
 HRM_PlugIn::HRM_PlugIn() :
@@ -90,8 +90,8 @@ void HRM_PlugIn::PluginStart()
 	m_xslingload_ini_path = m_system_path + "Resources" + m_ds + "plugins" + m_ds + "xslingload" + m_ds + "xslingload.ini";
 	m_xslingload_apt_path = m_system_path + "Resources" + m_ds + "plugins" + m_ds + "xslingload" + m_ds + "apt.dat";
 
-	m_gfp_path = "\\ProgramData\\Garmin\\Trainers\\Database";
-	m_wpt_path = "\\ProgramData\\Garmin\\Trainers\\Database";
+	m_gfp_path = "C:\\ProgramData\\Garmin\\Trainers\\Databases\\FPLN";
+	m_wpt_path = "C:\\ProgramData\\Garmin\\Trainers\\Databases\\FPLN";
 
 
 	srand(time(NULL));
@@ -742,12 +742,12 @@ void HRM_PlugIn::MissionStartFlight2()
 		XPLMSetDataf(m_f_payload, m_crew_weight + m_ems_equippment_weight + m_patient_weight);
 	}
 
-	if ((mp_cm_mission->IsSlingLoad() == true) && (m_sling_load_plugin == HRM::AB412));
+	if ((mp_cm_mission->IsSlingLoad() == true) && (m_sling_load_plugin == HRM::AB412))
 	{
 		XPLMCommandOnce(m_patient_transit);
 		m_412_patient_status = HRM::Patient_Transit;
 		// Patient loaded
-		//IvyPlaySound(12, -1, -1);
+		IvyPlaySound(12, -1, -1);
 	}
 
 
@@ -1072,21 +1072,6 @@ void HRM_PlugIn::CreateFlightPlan()
 	}
 	else if (m_flight_plan_format == HRM::FPL_GTN)
 	{
-		std::string gtn_file_name = m_gfp_path + m_ds + m_gfp_file;
-
-		std::ofstream fms_file;
-		fms_file.open(gtn_file_name, std::ios::out);
-
-		if (fms_file.is_open())
-		{
-			fms_file << "FPN/RI:F:" << m_cm_departure_icao << ":F:HRMSCENE:F:" << m_cm_hospital_icao << std::endl;
-			fms_file.close();
-		}
-		else
-		{
-			HRMDebugString("Could not write GFP file");
-		}
-
 		double wp_latitude = mp_cm_waypoint->latitude;
 		double wp_longitude = mp_cm_waypoint->longitude;
 
@@ -1103,6 +1088,48 @@ void HRM_PlugIn::CreateFlightPlan()
 			wp_latitude += deviation_lat_meter * meter_latitude;
 			wp_longitude += deviation_long_meter * meter_longitude;
 		}
+
+
+		std::string gtn_file_name = m_gfp_path + m_ds + m_gfp_file;
+
+		std::ofstream fms_file;
+		fms_file.open(gtn_file_name, std::ios::out);
+
+		if (fms_file.is_open())
+		{
+			fms_file << "FPN/RI:F:" << m_cm_departure_icao << ":F:";
+			
+			if (wp_latitude >= 0) fms_file << "N";
+			else fms_file << "S";
+			std::string temp = std::to_string(abs(wp_latitude));
+			if (abs(wp_latitude) < 10) temp = "0" + temp;
+			
+			boost::replace_all(temp, ".", "");
+			fms_file << temp;
+			//fms_file << temp.substr(0, 2);
+			//if (temp.size() > 3) fms_file << temp.substr(3, temp.size() - 3);
+
+			if (wp_longitude >= 0) fms_file << "E";
+			else fms_file << "W";
+			temp = std::to_string(abs(wp_longitude));
+			if (abs(wp_longitude) < 100) temp = "0" + temp;
+			if (abs(wp_longitude) < 10) temp = "0" + temp;
+			
+			
+			boost::replace_all(temp, ".", "");
+			fms_file << temp;
+			//fms_file << temp.substr(0, 3);
+			//if (temp.size() > 3) fms_file << temp.substr(4, temp.size() - 4);
+
+
+			fms_file << ":F:" << m_cm_hospital_icao << std::endl;
+			fms_file.close();
+		}
+		else
+		{
+			HRMDebugString("Could not write GFP file");
+		}
+
 
 		std::string wpt_file_name = m_wpt_path + m_ds + m_wpt_file;
 		std::ifstream wpt_file_in;
@@ -1885,6 +1912,10 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 	
 	//if (mp_current_mission != NULL) mp_current_mission->SetObjectPosition();
 
+	bool measure_time = false;
+
+	auto time_start = std::chrono::steady_clock::now(); 
+
 	ReadDataFast();
 
 	if ((m_li_paused == 0) && (m_li_replay == 0))
@@ -1916,6 +1947,8 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 
 		if (m_time_delta >= m_position_calc_rate)
 		{
+			measure_time = true;
+			
 			// If not done yet, check for FSEconomy
 
 			if ((m_cm_enable_fse == true) && (m_fse_dr_is_connected == NULL)) FSERegister();
@@ -1925,7 +1958,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			// Slow Computations
 
 			
-			if (m_mission_state == HRM::State_Create_Mission)
+			if ((m_mission_state == HRM::State_Create_Mission) && (m_window_visible == true))
 			{
 				if ((m_sling_enable == true) && (m_sling_load_plugin == HRM::XSlingload) && (m_xslingload_found == false))
 				{
@@ -2270,7 +2303,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 
 
 
-							if ((m_cm_enable_fse == true) && (m_cm_autoconnect_fse == true) && ((FSECanFinish() == true) || (FSEIsFlying() == false)))
+							if ((m_lfa_prop_ratio[0] < m_cm_collective_min) && (m_cm_enable_fse == true) && (m_cm_autoconnect_fse == true) && ((FSECanFinish() == true) || (FSEIsFlying() == false)))
 							{
 								FSEFinishFlight();
 
@@ -2643,7 +2676,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 						else */
 						// FSE Autoconnect
 						//
-						if ((m_cm_enable_fse == true) && (m_cm_autoconnect_fse == true) && ((FSECanFinish() == true) || (FSEIsFlying() == false)))
+						if ((m_lfa_prop_ratio[0] < m_cm_collective_min) && (m_cm_enable_fse == true) && (m_cm_autoconnect_fse == true) && ((FSECanFinish() == true) || (FSEIsFlying() == false)))
 						{
 							FSEFinishFlight();
 
@@ -2665,7 +2698,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 					}
 				}
 
-				if ((mp_cm_mission->IsSlingLoad() == true) && (m_sling_load_plugin == HRM::AB412));
+				if ((mp_cm_mission->IsSlingLoad() == true) && (m_sling_load_plugin == HRM::AB412))
 				{
 					if ((m_lf_412_hook_cable_extended == 0) && (m_412_patient_status == HRM::Patient_Transit))
 					{
@@ -2717,6 +2750,27 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 
 
 			m_time_delta = 0;
+		}
+	}
+
+	if (measure_time == true)
+	{
+		static int time_counter = 0;
+
+		
+			
+
+		auto time_end = std::chrono::steady_clock::now();
+		int time_value = std::chrono::duration_cast<std::chrono::microseconds>(time_end - time_start).count();
+
+		if ((time_counter++) > 10)
+		{
+			m_processing_time = time_value;
+			time_counter = 0;
+		}
+		else
+		{
+			m_processing_time = std::max(m_processing_time, time_value);
 		}
 	}
 

@@ -49,6 +49,7 @@ public:
 	//int m_scenery_number = 1;
 
 	std::shared_ptr<HRMImguiWidget> imguiPtr;
+	bool m_window_visible = false;
 
 	std::vector<HRM_Airport *> m_fse_airports;
 	std::vector<HRM_Airport *> m_custom_hospitals;
@@ -66,6 +67,8 @@ public:
 	std::vector<std::string> m_path_vector;
 	std::string m_global_path;
 	int m_global_path_index = 0;
+
+	int m_processing_time = 0;
 
 	bool m_street_enable = true;
 	bool m_urban_enable = false;
