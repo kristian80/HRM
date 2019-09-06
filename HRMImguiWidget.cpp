@@ -99,6 +99,32 @@ void HRMImguiWidget::buildInterface()
 
 		ImGui::SetColumnWidth(-1, 180);
 
+		char item_buffer[2048];
+
+		if (pHRM->m_scenery_names.size() == 0)
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+			ImGui::Text("No Scenery Found");
+			ImGui::PopStyleColor();
+		}
+		else
+		{
+			ImGui::Text("Select Scenery:");
+			for (int index = 0; index < pHRM->m_scenery_names.size(); index++)
+			{
+				std::string scenery_name = pHRM->m_scenery_names[index];
+
+				if (ImGui::RadioButton(scenery_name.c_str(), pHRM->m_scenery_number == index))
+				{
+					pHRM->m_scenery_number = index;
+					pHRM->ReadMissions();
+				}
+
+			}
+		}
+
+
+
 		ImGui::Text("Difficulty:"); 
 		if (ImGui::RadioButton("Easy", pHRM->m_difficutly == HRM::Easy))		pHRM->m_difficutly = HRM::Easy;
 		if (ImGui::RadioButton("Normal", pHRM->m_difficutly == HRM::Normal))	pHRM->m_difficutly = HRM::Normal;

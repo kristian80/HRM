@@ -43,6 +43,8 @@ public:
 	std::string m_xslingload_ini_path = "";
 	std::string m_xslingload_apt_path = "";
 
+	XPLMCommandRef myCmdRefToggleControlWindow = NULL;
+
 
 	XPLMPluginID m_ivy_id = XPLM_NO_PLUGIN_ID;
 
@@ -66,6 +68,13 @@ public:
 
 	std::vector<std::string> m_path_vector;
 	std::string m_global_path;
+
+	std::string m_scenery_name = "";
+	
+	int m_scenery_number = 0;
+	int m_scenery_count = 1;
+	std::vector<std::string> m_scenery_names;
+
 	int m_global_path_index = 0;
 
 	int m_processing_time = 0;
@@ -485,6 +494,7 @@ public:
 	
 	void SaveMissions();
 	void ReadMissions();
+	void CountMissions();
 
 	void ReadDataFast();
 	void ReadDataSlow();
@@ -493,5 +503,6 @@ public:
 	int PluginMouseClickCallback(XPLMWindowID inWindowID, int x, int y, XPLMMouseStatus inMouse, void * inRefcon);
 
 	float PluginFlightLoopCallback(float elapsedMe, float elapsedSim, int counter, void * refcon);
+	int ToggleControlWindowCallback(XPLMCommandRef cmd, XPLMCommandPhase phase, void* refcon);
 };
 

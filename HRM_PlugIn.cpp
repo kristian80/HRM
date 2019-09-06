@@ -107,6 +107,9 @@ void HRM_PlugIn::PluginStart()
 	m_PluginMenuID = XPLMCreateMenu("HRM", XPLMFindPluginsMenu(), m_PluginMenu, WrapMenuHandler, 0);
 	XPLMAppendMenuItem(m_PluginMenuID, "Toggle Control Window", (void *) "Item1", 1);
 
+	myCmdRefToggleControlWindow = XPLMCreateCommand("HRM/ToogleControlWindow", "Toggle Control Window");
+	XPLMRegisterCommandHandler(myCmdRefToggleControlWindow, WrapToggleControlWindowCallback, 0, 0);
+
 	int left, top, right, bot;
 	XPLMGetScreenBoundsGlobal(&left, &top, &right, &bot);
 	
@@ -182,7 +185,7 @@ void HRM_PlugIn::PluginStart()
 	m_f_roll = XPLMFindDataRef("sim/flightmodel/position/phi");
 
 	m_f_jett_weight = XPLMFindDataRef("sim/flightmodel/weight/m_jettison");
-
+	CountMissions();
 	ReadMissions();
 
 	ReadCustomWaypoints(m_street_waypoints, "street");
@@ -1789,7 +1792,14 @@ void HRM_PlugIn::SaveMissions()
 
 void HRM_PlugIn::ReadMissions()
 {
-	for (int scenery_number = 1; scenery_number <= HRM::max_scenery; scenery_number++)
+	m_street_missions.clear();
+	m_urban_missions.clear();
+	m_sar_missions.clear();
+	m_sling_missions.clear();
+
+	int scenery_number = m_scenery_number + 1;
+
+	//for (int scenery_number = 1; scenery_number <= HRM::max_scenery; scenery_number++)
 	{
 		bool file_found = true;
 		boost::property_tree::ptree pt;
@@ -1806,6 +1816,9 @@ void HRM_PlugIn::ReadMissions()
 		{
 			int mission_counter = 0;
 			bool mission_created = true;
+
+			try { m_scenery_name = pt.get<std::string>("scenery.name"); }
+			catch (...) {}
 
 			while (mission_created)
 			{
@@ -1827,6 +1840,38 @@ void HRM_PlugIn::ReadMissions()
 		}
 	}
 
+}
+
+void HRM_PlugIn::CountMissions()
+{
+	bool file_found = true;
+	m_scenery_count = 0;
+	std::string current_name = "";
+	for (int scenery_number = 1; (scenery_number <= HRM::max_scenery) && (file_found == true); scenery_number++)
+	{
+		
+		boost::property_tree::ptree pt;
+		try
+		{
+			boost::property_tree::read_xml(m_scenery_file + "_" + std::to_string(scenery_number) + ".xml", pt);
+		}
+		catch (...)
+		{
+			file_found = false;
+			//return;
+		}
+
+		try { current_name = pt.get<std::string>("scenery.name"); }
+		catch (...) { 
+			file_found = false; 
+		}
+
+		if (file_found)
+		{
+			m_scenery_count++;
+			m_scenery_names.push_back(current_name);
+		}
+	}
 }
 
 void HRM_PlugIn::ReadDataFast()
@@ -2273,11 +2318,13 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 
 					if (m_mission_flight1_countdown <= 0)
 					{
+						if (m_mission_time_failed == false) IvyPlaySound(10, -1, -1); // Mission Failed
+
 						m_mission_flight1_countdown = 0;
 						m_mission_time_failed = true;
 
-						// Mission Failed
-						IvyPlaySound(10, -1, -1);
+						
+						
 					}
 
 					if (mp_cm_mission->IsSlingLoad() == true)
@@ -2654,12 +2701,13 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 					m_mission_flight2_countdown -= m_time_delta * m_li_sim_ground_speed;
 					m_mission_flight2_time += m_time_delta * m_li_sim_ground_speed;
 
-					if (m_mission_flight2_countdown <= 0)
+					if (m_mission_flight2_countdown <= 0) 
 					{
+						if (m_mission_time_failed == false) IvyPlaySound(10, -1, -1); // Mission Failed
+
 						m_mission_flight2_countdown = 0;
 						m_mission_time_failed = true;
-						// Mission Failed
-						IvyPlaySound(10, -1, -1);
+						
 					}
 				}
 				else
@@ -2775,5 +2823,21 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 	}
 
 	return m_data_rate;
+}
+
+int HRM_PlugIn::ToggleControlWindowCallback(XPLMCommandRef cmd, XPLMCommandPhase phase, void* refcon)
+{
+	if (phase == xplm_CommandBegin)
+	{
+		if (!imguiPtr->GetVisible())
+		{
+			imguiPtr->Visible(true);
+		}
+		else
+		{
+			imguiPtr->Visible(false);
+		}
+	}
+	return 1;
 }
 

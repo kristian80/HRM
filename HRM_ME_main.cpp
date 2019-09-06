@@ -134,6 +134,11 @@ void WrapMenuHandler(void * in_menu_ref, void * in_item_ref)
 	return pHRM->PluginMenuHandler(in_menu_ref, in_item_ref);
 }
 
+int WrapToggleControlWindowCallback(XPLMCommandRef cmd, XPLMCommandPhase phase, void* refcon)
+{
+	return pHRM->ToggleControlWindowCallback(cmd, phase, refcon);
+}
+
 /*
 int WrapHRMVSpeedHandler(XPWidgetMessage  inMessage, XPWidgetID  inWidget, intptr_t inParam1, intptr_t inParam2)
 {
