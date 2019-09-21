@@ -113,7 +113,7 @@ public:
 
 	int m_flight_plan_format = HRM::FPL_XP11;
 	float m_cm_collective_min = 0.1f;
-	int m_cm_airac_cycle = 1809;
+	int m_cm_airac_cycle = 1907;
 
 	float m_patient_weight = 75;
 	float m_crew_weight = 225;
@@ -157,6 +157,12 @@ public:
 
 	float m_xslingload_offset = 0.75;
 
+	bool m_course_limit_enable = false;
+	int m_course_limit_start = 0;
+	int m_course_limit_stop = 360;
+
+	
+
 	std::string m_xslingload_object_path = "./Custom Scenery/CDB-Library/Flora_Fauna/Birds_pets/fauna_birds_bird7.obj";
 
 	
@@ -171,6 +177,8 @@ public:
 	bool m_custom_icao_exists = false;
 	bool m_xslingload_not_found = false;
 	bool m_cm_patient_sight_said = false;
+
+	
 	
 	float m_cm_say_timer = 0;
 	int m_cm_say_state = 0;
@@ -340,6 +348,7 @@ public:
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// DATAREFS
 
+	XPLMDataRef m_s_acf_descrip;
 
 	XPLMDataRef m_d_local_x;
 	XPLMDataRef m_d_local_y;
@@ -390,6 +399,8 @@ public:
 
 	/////////////////////////////////////////////////////////////////////////////////
 	// Dataref Variables
+
+	std::string m_ls_acf_descrip = "";
 
 	double m_ld_local_x;
 	double m_ld_local_y;
@@ -461,6 +472,7 @@ public:
 	void MissionStart();
 	void MissionStartFlight1();
 	void MissionStartFlight2();
+	void MissionCalcGFPoints();
 	void MissionFinish();
 	void MissionReset();
 	void MissionCancel();
@@ -488,6 +500,7 @@ public:
 	void ReadCustomWaypoints(std::vector<HRM_Waypoint *> &waypoint_vector, std::string file_name);
 	void ReadGlobalWaypoints(std::vector<HRM_Waypoint *> &waypoint_vector, std::string file_name);
 	void ReadWaypointFile(std::vector<HRM_Waypoint *> &waypoint_vector, std::string file_name);
+	bool CheckWaypointAngle(HRM_Waypoint& waypoint);
 	
 	void SaveConfig();
 	void ReadConfig();

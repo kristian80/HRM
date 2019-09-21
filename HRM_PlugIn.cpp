@@ -140,6 +140,8 @@ void HRM_PlugIn::PluginStart()
 
 	HRMDebugString("Lookup Datarefs");
 
+	m_s_acf_descrip = XPLMFindDataRef("sim/aircraft/view/acf_descrip");
+
 	m_d_local_x = XPLMFindDataRef("sim/flightmodel/position/local_x");
 	m_d_local_y = XPLMFindDataRef("sim/flightmodel/position/local_y");
 	m_d_local_z = XPLMFindDataRef("sim/flightmodel/position/local_z");
@@ -335,6 +337,7 @@ void HRM_PlugIn::ConfigureXSlingload()
 
 void HRM_PlugIn::MissionCreate()
 {
+	
 	bool suitable_waypoint_found = false;
 
 	m_cm_creation_failed = true;
@@ -480,8 +483,15 @@ void HRM_PlugIn::MissionCreate()
 
 	// Find Random Mission and Waypoint
 
-	int random_waypoint = rand() % considered_waypoints.size();
+	int max = RAND_MAX;
+
+	static long last_random_number = 0;
+	int new_random_number = rand() + last_random_number;
+	last_random_number = new_random_number;
+
+	int random_waypoint = new_random_number % considered_waypoints.size();
 	int random_mission = rand() % p_mission_vector->size();
+
 
 	mp_cm_waypoint = considered_waypoints.at(random_waypoint);
 	mp_cm_mission = p_mission_vector->at(random_mission);
@@ -571,7 +581,7 @@ bool HRM_PlugIn::FindWaypoint(std::vector<HRM_Waypoint*>* p_waypoint_vector, std
 
 			if ((distance >= m_cm_min_distance) && (distance <= m_cm_max_distance))
 			{
-				considered_waypoints.push_back(p_waypoint);
+				if (CheckWaypointAngle(*p_waypoint) == true) considered_waypoints.push_back(p_waypoint);
 			}
 
 		}
@@ -757,12 +767,10 @@ void HRM_PlugIn::MissionStartFlight2()
 	pHRM->m_mission_state = HRM::State_Flight_2;
 }
 
-void HRM_PlugIn::MissionFinish()
+void HRM_PlugIn::MissionCalcGFPoints()
 {
-	m_mission_flight1_avg_speed = m_mission_flight1_distance / (m_mission_flight1_time / 3600);
-	m_mission_flight2_avg_speed = m_mission_flight2_distance / (m_mission_flight2_time / 3600);
-
 	float g_force_seconds = 0;
+	m_mission_points_g_force = 0;
 
 	g_force_seconds += m_mission_gf_low * HRM::eval_g_low_factor;
 	g_force_seconds += m_mission_gf_med * HRM::eval_g_med_factor;
@@ -780,10 +788,20 @@ void HRM_PlugIn::MissionFinish()
 	g_force_seconds += m_mission_gv_neg_med * HRM::eval_g_med_factor;
 	g_force_seconds += m_mission_gv_neg_high * HRM::eval_g_high_factor;
 
+	if (m_mission_time_failed == false)
+		m_mission_points_g_force = ((float)HRM::points_g_flight2) / (1.f + (g_force_seconds / HRM::eval_g_total_factor));
+}
+
+void HRM_PlugIn::MissionFinish()
+{
+	m_mission_flight1_avg_speed = m_mission_flight1_distance / (m_mission_flight1_time / 3600);
+	m_mission_flight2_avg_speed = m_mission_flight2_distance / (m_mission_flight2_time / 3600);
+
+	MissionCalcGFPoints();
+
 	m_mission_points_total = 0;
 	m_mission_points_flight1 = 0;
 	m_mission_points_flight2 = 0;
-	m_mission_points_g_force = 0;
 	m_mission_points_difficulty = 0;
 	m_mission_points_search_range = 0;
 
@@ -794,7 +812,7 @@ void HRM_PlugIn::MissionFinish()
 		m_mission_points_flight1 = std::min(((float) m_mission_flight1_avg_speed) / HRM::eval_flight1_nominal_speed, 1.f) * ((float) HRM::points_speed_flight1);
 		m_mission_points_flight2 = std::min(((float)m_mission_flight2_avg_speed) / HRM::eval_flight2_nominal_speed, 1.f) * ((float)HRM::points_speed_flight2);
 
-		m_mission_points_g_force = ((float)HRM::points_g_flight2) / (1.f + (g_force_seconds/ HRM::eval_g_total_factor));
+		
 
 		if (m_difficutly == HRM::Hard) m_mission_points_difficulty = HRM::points_hard;
 		else if (m_difficutly == HRM::Normal) m_mission_points_difficulty = HRM::points_normal;
@@ -1455,6 +1473,8 @@ void HRM_PlugIn::ReadGlobalWaypoints(std::vector<HRM_Waypoint*>& waypoint_vector
 	int latitude = (int)m_ld_latitude;
 	int longitude = (int)m_ld_longitude;
 
+	
+
 	for (int lat_index = latitude - 4; lat_index < (latitude + 4); lat_index++)
 	{
 		for (int long_index = longitude - 4; long_index < (longitude + 4); long_index++)
@@ -1474,6 +1494,8 @@ void HRM_PlugIn::ReadGlobalWaypoints(std::vector<HRM_Waypoint*>& waypoint_vector
 		}
 	}
 
+	
+
 }
 
 
@@ -1490,7 +1512,7 @@ void HRM_PlugIn::ReadWaypointFile(std::vector<HRM_Waypoint*>& waypoint_vector, s
 		double lat_correct = 0;
 		double long_correct = 0;
 
-
+		XPLMProbeRef probe = XPLMCreateProbe(xplm_ProbeY);
 
 		while (std::getline(waypoint_file, line_string))
 		{
@@ -1544,7 +1566,29 @@ void HRM_PlugIn::ReadWaypointFile(std::vector<HRM_Waypoint*>& waypoint_vector, s
 						p_waypoint->lat_heading = way_lat + (meter_latitude * lat_correct);
 						p_waypoint->long_heading = way_long + (meter_longitude * long_correct);
 
-						waypoint_vector.push_back(p_waypoint);
+						// Check for Water
+						double zero_x, zero_y, zero_z;
+						XPLMWorldToLocal(p_waypoint->latitude, p_waypoint->longitude, 0, &zero_x, &zero_y, &zero_z);
+
+						double local_x = 0, local_y = 0, local_z = 0;
+						local_x = zero_x;
+						local_z = zero_z;
+
+						XPLMProbeInfo_t info;
+						info.structSize = sizeof(info);
+						XPLMProbeResult result = XPLMProbeTerrainXYZ(probe, zero_x, zero_y, zero_z, &info);
+
+						double local_long;
+						double local_lat;
+						double local_alt;
+
+						XPLMLocalToWorld(info.locationX, info.locationY, info.locationZ, &local_lat, &local_long, &local_alt);
+						XPLMWorldToLocal(p_waypoint->latitude, p_waypoint->longitude, local_alt, &zero_x, &zero_y, &zero_z); // incorporate elevation 
+						XPLMProbeTerrainXYZ(probe, zero_x, zero_y, zero_z, &info);
+						
+						// If no water
+						if (info.is_wet == 0)
+							waypoint_vector.push_back(p_waypoint);
 
 						p_waypoint = new HRM_Waypoint();
 						odd_waypoint = true;
@@ -1555,6 +1599,7 @@ void HRM_PlugIn::ReadWaypointFile(std::vector<HRM_Waypoint*>& waypoint_vector, s
 
 
 		}
+		XPLMDestroyProbe(probe);
 
 		delete p_waypoint;
 
@@ -1563,6 +1608,23 @@ void HRM_PlugIn::ReadWaypointFile(std::vector<HRM_Waypoint*>& waypoint_vector, s
 	{
 
 	}
+}
+
+bool HRM_PlugIn::CheckWaypointAngle(HRM_Waypoint& waypoint)
+{
+	if (m_course_limit_enable == false) return true;
+
+	double lat_diff = waypoint.latitude - m_ld_latitude;
+	double lon_diff = waypoint.longitude - m_ld_longitude;
+
+	float angle = (float) (atan2(lon_diff, lat_diff) * 180.0f / M_PI);
+
+	if (angle < 0.0f) angle += 360.0f;
+
+	if ((m_course_limit_start <= m_course_limit_stop) &&(angle >= m_course_limit_start) && (angle <= m_course_limit_stop)) return true;
+	if ((m_course_limit_start > m_course_limit_stop) && ((angle >= m_course_limit_start) || (angle <= m_course_limit_stop))) return true;
+
+	return false;
 }
 
 void HRM_PlugIn::SaveConfig()
@@ -1578,7 +1640,7 @@ void HRM_PlugIn::SaveConfig()
 
 	pt.put("HRM.global_path_index", m_global_path_index);
 
-	
+	pt.put("HRM.scenery_index", m_scenery_number);
 
 	pt.put("HRM.flight_plan_format", m_flight_plan_format);
 
@@ -1598,6 +1660,11 @@ void HRM_PlugIn::SaveConfig()
 	pt.put("HRM.scenario_position_type", (int) m_cm_use_position);
 	pt.put("HRM.scenario_min_distance_nm", m_cm_min_distance);
 	pt.put("HRM.scenario_max_distance_nm", m_cm_max_distance);
+
+	pt.put("HRM.course_limit_enable", m_course_limit_enable);
+	pt.put("HRM.course_limit_start", m_course_limit_start);
+	pt.put("HRM.course_limit_stop", m_course_limit_stop);
+
 	pt.put("HRM.departure_icao", m_cm_departure_icao);
 	pt.put("HRM.scenario_icao", m_cm_scenario_icao);
 	pt.put("HRM.hospital_icao", m_cm_hospital_icao);
@@ -1647,6 +1714,9 @@ void HRM_PlugIn::ReadConfig()
 	try { m_global_path_index = pt.get<int>("HRM.global_path_index"); }
 	catch (...) { HRMDebugString("Ini File: Entry not found."); }
 
+	try { m_scenery_number = pt.get<int>("HRM.scenery_index"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
 	if (m_global_path_index < m_path_vector.size())
 	{
 		m_global_path = m_path_vector[m_global_path_index];
@@ -1693,6 +1763,16 @@ void HRM_PlugIn::ReadConfig()
 
 	try { m_cm_max_distance = pt.get<int>("HRM.scenario_max_distance_nm"); }
 	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_course_limit_enable = pt.get<bool>("HRM.course_limit_enable"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_course_limit_start = pt.get<int>("HRM.course_limit_start"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_course_limit_stop = pt.get<int>("HRM.course_limit_stop"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
 
 	try { m_cm_departure_icao = pt.get<std::string>("HRM.departure_icao"); }
 	catch (...) { HRMDebugString("Ini File: Entry not found."); }
@@ -1872,6 +1952,9 @@ void HRM_PlugIn::CountMissions()
 			m_scenery_names.push_back(current_name);
 		}
 	}
+
+	if (m_scenery_number >= m_scenery_names.size())
+		m_scenery_number = 0;
 }
 
 void HRM_PlugIn::ReadDataFast()
@@ -1895,6 +1978,11 @@ void HRM_PlugIn::ReadDataSlow()
 {
 
 	m_li_vr_enabled = XPLMGetDatai(m_i_vr_enabled);
+
+
+	char lba_acf_descrip[1024];
+	XPLMGetDatab(m_s_acf_descrip, lba_acf_descrip, 0, 240);
+	m_ls_acf_descrip = lba_acf_descrip;
 
 	if (m_fse_dr_is_connected != NULL)		m_fse_li_is_connected	= XPLMGetDatai(m_fse_dr_is_connected);
 	if (m_fse_dr_is_flying != NULL)			m_fse_li_is_flying		= XPLMGetDatai(m_fse_dr_is_flying);
@@ -2698,6 +2786,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			{
 				if (m_li_on_ground == 0)
 				{
+					MissionCalcGFPoints();
 					m_mission_flight2_countdown -= m_time_delta * m_li_sim_ground_speed;
 					m_mission_flight2_time += m_time_delta * m_li_sim_ground_speed;
 

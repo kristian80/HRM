@@ -94,7 +94,7 @@ void HRMImguiWidget::buildInterface()
 
 	if (pHRM->m_mission_state == HRM::State_Create_Mission)
 	{
-		
+
 		ImGui::Columns(2, 0, true);
 
 		ImGui::SetColumnWidth(-1, 180);
@@ -125,7 +125,7 @@ void HRMImguiWidget::buildInterface()
 
 
 
-		ImGui::Text("Difficulty:"); 
+		ImGui::Text("Difficulty:");
 		if (ImGui::RadioButton("Easy", pHRM->m_difficutly == HRM::Easy))		pHRM->m_difficutly = HRM::Easy;
 		if (ImGui::RadioButton("Normal", pHRM->m_difficutly == HRM::Normal))	pHRM->m_difficutly = HRM::Normal;
 		if (ImGui::RadioButton("Hard", pHRM->m_difficutly == HRM::Hard))		pHRM->m_difficutly = HRM::Hard;
@@ -160,7 +160,7 @@ void HRMImguiWidget::buildInterface()
 		{
 			ImGui::PushItemWidth(80);
 			ImGui::Text("Patient Pickup");
-			ImGui::SliderFloat("Distance [m]", &(pHRM->m_sling_load_distance),0.1,10,"%.1f");
+			ImGui::SliderFloat("Distance [m]", &(pHRM->m_sling_load_distance), 0.1, 10, "%.1f");
 			ImGui::SliderFloat("Time [s]    ", &(pHRM->m_sling_load_time_min), 0.0, 10, "%.1f");
 			ImGui::PopItemWidth();
 		}
@@ -170,7 +170,7 @@ void HRMImguiWidget::buildInterface()
 		if (ImGui::RadioButton("XP10", pHRM->m_flight_plan_format == HRM::FPL_XP10))		pHRM->m_flight_plan_format = HRM::FPL_XP10;
 		if (ImGui::RadioButton("GTN GFP", pHRM->m_flight_plan_format == HRM::FPL_GTN))		pHRM->m_flight_plan_format = HRM::FPL_GTN;
 
-		
+
 
 		ImGui::Checkbox("Adjust Payload", &(pHRM->m_adjust_payload));
 
@@ -225,6 +225,15 @@ void HRMImguiWidget::buildInterface()
 			//ImGui::SameLine();
 			ImGui::InputInt("Max Distance [nm]", &(pHRM->m_cm_max_distance), 1, 1);
 			ImGui::PopItemWidth();
+		
+
+			ImGui::Checkbox("Set Course", &(pHRM->m_course_limit_enable));
+
+			if (pHRM->m_course_limit_enable == true)
+			{
+				ImGui::InputInt("Start [deg]", &(pHRM->m_course_limit_start), 1, 1);
+				ImGui::InputInt("Stop  [deg]", &(pHRM->m_course_limit_stop), 1, 1);
+			}
 		}
 
 		ImGui::Checkbox("Panic Call", &(pHRM->m_cm_estmimated_wp));
@@ -745,6 +754,11 @@ void HRMImguiWidget::buildInterface()
 			else															ImGui::PushStyleColor(ImGuiCol_Text, color_red);
 			ImGui::Text("Forces Upwards");
 			ImGui::PopStyleColor();
+
+			ImGui::Text("Patient Comfort Level:");
+			ImGui::SameLine();
+			ImGui::SetCursorPosX(250);
+			ImGui::Text("%3i/%3i", pHRM->m_mission_points_g_force, HRM::points_g_flight2);
 
 		}
 		else
