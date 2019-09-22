@@ -41,8 +41,34 @@ public:
 	double m_zero_distance = 0;
 
 	float m_angle = 0;
+	
 
 	bool m_is_patient = false;
+	bool m_is_slingload = false;
+	bool m_sling_is_bambi_bucket = false;
+	bool m_sling_instanced_drawing = true;
+
+	float m_sling_pos_x = 0;
+	float m_sling_pos_y = 0;
+	float m_sling_pos_z = 0;
+
+	float m_sling_weight = 100;
+	float m_sling_height = 0;
+
+	float m_sling_size_x = 0;
+	float m_sling_size_y = 0;
+	float m_sling_size_z = 0;
+
+	float m_sling_cw_x = 0.9;
+	float m_sling_cw_y = 0.9;
+	float m_sling_cw_z = 0.9;
+
+	float m_sling_friction_glide = 0.35;
+	float m_sling_friction_static = 3;
+
+	float m_sling_elevation = 0;
+	
+
 
 	std::string m_obj_path = "3D_people_library/commercial_pilot.obj";
 

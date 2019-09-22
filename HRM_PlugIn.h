@@ -40,9 +40,6 @@ public:
 	std::string m_wpt_path = "";
 	std::string m_wpt_file = "user.wpt";
 
-	std::string m_xslingload_ini_path = "";
-	std::string m_xslingload_apt_path = "";
-
 	XPLMCommandRef myCmdRefToggleControlWindow = NULL;
 
 
@@ -104,7 +101,7 @@ public:
 
 	std::string m_custom_icao = "";
 
-	XPLMPluginID m_xslingload_id = XPLM_NO_PLUGIN_ID;
+	XPLMPluginID m_HSL_id = XPLM_NO_PLUGIN_ID;
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// Mission Settings
@@ -131,7 +128,7 @@ public:
 	int m_cm_min_distance = 0;
 	int m_cm_max_distance = 15;
 
-	bool m_cm_estmimated_wp = true;
+	bool m_cm_estmimated_wp = false;
 	int m_cm_estimated_radius_m = 500;
 
 	float m_cm_sling_say_distance = 100;
@@ -145,17 +142,17 @@ public:
 	float m_patient_countdown_value = 30;
 	float m_hospital_countdown_value = 10;
 
-	int m_sling_load_plugin = HRM::XSlingload;
+	int m_sling_load_plugin = HRM::HSL;
 	float m_sling_load_distance = 3.0f;
 	float m_sling_load_time_min = 1.0f;
 
-	float m_xslingload_treshold = 50;
-	float m_xslingload_weight_empty = 15;
-	float m_xslingload_weight_full = 140;
-	float m_xslingload_size_empty = 0;
-	float m_xslingload_size_full = 15;
+	float m_HSL_treshold = 50;
+	float m_HSL_weight_empty = 15;
+	float m_HSL_weight_full = 100;
+	float m_HSL_size_empty = 0;
+	float m_HSL_size_full = 15;
 
-	float m_xslingload_offset = 0.75;
+	float m_HSL_offset = 0.75;
 
 	bool m_course_limit_enable = false;
 	int m_course_limit_start = 0;
@@ -163,7 +160,7 @@ public:
 
 	
 
-	std::string m_xslingload_object_path = "./Custom Scenery/CDB-Library/Flora_Fauna/Birds_pets/fauna_birds_bird7.obj";
+	std::string m_HSL_object_path = "./Custom Scenery/CDB-Library/Flora_Fauna/Birds_pets/fauna_birds_bird7.obj";
 
 	
 	
@@ -175,7 +172,7 @@ public:
 	bool m_cm_cancelling = false;
 	bool m_cm_not_on_ground = false;
 	bool m_custom_icao_exists = false;
-	bool m_xslingload_not_found = false;
+	bool m_HSL_not_found = false;
 	bool m_cm_patient_sight_said = false;
 
 	
@@ -184,8 +181,8 @@ public:
 	int m_cm_say_state = 0;
 	float m_cm_distance_h_max = 0;
 	
-	bool m_xslingload_found = false;
-	bool m_xslingload_reload_position_file = false;
+	bool m_HSL_found = false;
+	bool m_HSL_reload_position_file = false;
 
 
 	
@@ -210,34 +207,81 @@ public:
 	XPLMDataRef m_f_412_ext_long = NULL;
 	XPLMDataRef m_i_412_ext_set = NULL;
 
+	// HSL
+
+	HRM_Object* mp_HSL_slingload_object = NULL;
+
+	XPLMCommandRef m_HSL_enable = NULL;
+	XPLMCommandRef m_HSL_disable = NULL;
+	XPLMCommandRef m_HSL_connect = NULL;
+	XPLMCommandRef m_HSL_place_coordinates = NULL;
+	XPLMCommandRef m_HSL_place_ground = NULL;
+	XPLMCommandRef m_HSL_update_objects = NULL;
+
+	XPLMDataRef m_d_HSL_latitude = NULL;
+	XPLMDataRef m_d_HSL_longitude = NULL;
+
+	XPLMDataRef m_f_HSL_rope_length = NULL;
+
+	XPLMDataRef m_i_HSL_cargo_is_bambi = NULL;
+	XPLMDataRef m_i_HSL_cargo_connected = NULL;
+	XPLMDataRef m_i_HSL_cargo_instanced_drawing = NULL;
+
+	XPLMDataRef m_f_HSL_cargo_height = NULL;
+	XPLMDataRef m_f_HSL_cargo_mass = NULL;
+	XPLMDataRef m_f_HSL_cargo_friction_glide = NULL;
+	XPLMDataRef m_f_HSL_cargo_friction_static = NULL;
+
+	XPLMDataRef m_fa_HSL_cargo_vector_position = NULL;
+	XPLMDataRef m_fa_HSL_cargo_vector_size = NULL;
+	XPLMDataRef m_fa_HSL_cargo_vector_cw = NULL;
+	XPLMDataRef m_fa_HSL_cargo_vector_hook_pos = NULL;
+	XPLMDataRef m_fa_HSL_cargo_offset = NULL;
+
+	XPLMDataRef m_ba_HSL_cargo_path = NULL;
+	
+
+	/*
+	/*strcpy(buffer, "RescueX/objects/Bergwacht_Luftrettungssack.obj");
+	XPLMDataRef test = XPLMFindDataRef("HSL/RopeObjectPath");
+
+	XPLMSetDatab(test, buffer, 0, 2048);*/
+
+	int m_li_HSL_cargo_connected = 0;
+	float m_lfa_HSL_cargo_vector_position[3] = { 0, 0, 0 };
+	float m_lfa_HSL_cargo_vector_hook_pos[3] = { 0, 0, 0 };
+	float m_lf_HSL_rope_length = 0;
+	
+
+
 	float m_lf_412_hook_x = NULL;
 	float m_lf_412_hook_y = NULL;
 	float m_lf_412_hook_z = NULL;
 	float m_lf_412_hook_cable_extended = NULL;
-	float m_lf_412_hook_cable_direction = NULL;
+	float m_lf_sling_load_hook_cable_direction = NULL;
 
 	float m_lf_412_ext_lat = NULL;
 	float m_lf_412_ext_long = NULL;
 	int m_li_412_ext_set = NULL;
 
-	double m_412_meter_lat = 1;
-	double m_412_meter_long = 1;
+	double m_sling_load_meter_lat = 1;
+	double m_sling_load_meter_long = 1;
 
-	float m_412_patient_distance = 0;
-	float m_412_patient_distance_side = 0;
-	float m_412_patient_distance_forward = 0;
-	float m_412_patient_distance_alt = 0;
-	float m_412_patient_heading = 0;
+	float m_sling_load_patient_distance = 0;
+	float m_sling_load_patient_distance_side = 0;
+	float m_sling_load_patient_distance_forward = 0;
+	float m_sling_load_patient_distance_alt = 0;
+	float m_sling_load_patient_heading = 0;
 
-	float m_412_patient_local_x = 0;
-	float m_412_patient_local_y = 0;
-	float m_412_patient_local_z = 0;
+	double m_sling_load_patient_local_x = 0;
+	double m_sling_load_patient_local_y = 0;
+	double m_sling_load_patient_local_z = 0;
 
 	double m_412_patient_lat = 0;
 	double m_412_patient_long = 0;
 	double m_412_patient_elev = 0;
 
-	float m_412_patient_loading_time = 0;
+	float m_sling_load_patient_loading_time = 0;
 
 	float m_412_correct_lat = 0;
 	float m_412_correct_long = 0;
@@ -466,7 +510,7 @@ public:
 	//void IvyDrawOutputWindow(XPLMWindowID in_window_id, void * in_refcon);
 	void PluginMenuHandler(void * in_menu_ref, void * in_item_ref);
 
-	void ConfigureXSlingload();
+	void ConfigureHSL();
 	void MissionCreate();
 	bool FindWaypoint(std::vector<HRM_Waypoint*>* p_waypoint_vector, std::vector<HRM_Waypoint*> &global_waypoint_vector, std::vector<HRM_Waypoint*>& considered_waypoints);
 	void MissionStart();

@@ -123,7 +123,7 @@ namespace HRM
 
 	enum Slingload_Type
 	{
-		XSlingload,
+		HSL,
 		AB412
 	};
 	enum FlightPlan_Type
@@ -234,6 +234,7 @@ namespace HRM
 	const int search_range_min = 500;
 	const int search_range_max = 5000;
 
+	const float hsl_rope_length_min = 0.5;
 	
 
 
@@ -254,6 +255,15 @@ inline bool is_int(float f)
 {
 	if (f == ((int)f)) return true;
 	return false;
+}
+
+inline void SetVectorDataRef(XPLMDataRef& dataref, float &x, float &y, float &z)
+{
+	float values[3];
+	values[0] = x;
+	values[1] = y;
+	values[2] = z;
+	XPLMSetDatavf(dataref, values, 0, 3);
 }
 
 inline void HRMDebugString(std::string output)

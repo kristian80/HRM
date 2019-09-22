@@ -117,7 +117,7 @@ void HRM_Object::SetPosition(double zero_latitude, double zero_longitude, double
 	//XPLMWorldToLocal(local_lat, local_long, local_alt + m_elevation, &zero_x, &zero_y, &zero_z); // incorporate elevation
 
 	XPLMWorldToLocal(m_latitude, m_longitude, local_alt + m_elevation, &zero_x, &zero_y, &zero_z); // incorporate elevation 
-
+	m_sling_elevation = local_alt + m_elevation;
 	local_x = zero_x;
 	local_z = zero_z;
 
@@ -199,6 +199,24 @@ void HRM_Object::SaveObject(boost::property_tree::ptree & pt, std::string missio
 	pt.put(object + "roll", m_roll);
 	pt.put(object + "is_patient", m_is_patient);
 
+
+	pt.put(object + "is_slingload", m_is_slingload);
+	pt.put(object + "sling_is_bambi_bucket", m_sling_is_bambi_bucket);
+	pt.put(object + "sling_instanced_drawing", m_sling_instanced_drawing);
+	pt.put(object + "sling_pos_x", m_sling_pos_x);
+	pt.put(object + "sling_pos_y", m_sling_pos_y);
+	pt.put(object + "sling_pos_z", m_sling_pos_z);
+	pt.put(object + "sling_weight", m_sling_weight);
+	pt.put(object + "sling_height", m_sling_height);
+	pt.put(object + "sling_size_x", m_sling_size_x);
+	pt.put(object + "sling_size_y", m_sling_size_y);
+	pt.put(object + "sling_size_z", m_sling_size_z);
+	pt.put(object + "sling_cw_x", m_sling_cw_x);
+	pt.put(object + "sling_cw_y", m_sling_cw_y);
+	pt.put(object + "sling_cw_z", m_sling_cw_z);
+	pt.put(object + "sling_friction_glide", m_sling_friction_glide);
+	pt.put(object + "sling_friction_static", m_sling_friction_static);
+
 	object_counter++;
 }
 
@@ -225,6 +243,41 @@ bool HRM_Object::ReadObject(boost::property_tree::ptree & pt, std::string missio
 	try { m_is_patient = pt.get<bool>(object + "is_patient"); }
 	catch (...) {}
 
+
+	try { m_is_slingload = pt.get<bool>(object + "is_slingload"); }
+	catch (...) {}
+	try { m_sling_is_bambi_bucket = pt.get<bool>(object + "sling_is_bambi_bucket"); }
+	catch (...) {}
+	try { m_sling_instanced_drawing = pt.get<bool>(object + "sling_instanced_drawing"); }
+	catch (...) {}
+
+	try { m_sling_pos_x = pt.get<float>(object + "sling_pos_x"); }
+	catch (...) {}
+	try { m_sling_pos_y = pt.get<float>(object + "sling_pos_y"); }
+	catch (...) {}
+	try { m_sling_pos_z = pt.get<float>(object + "sling_pos_z"); }
+	catch (...) {}
+	try { m_sling_weight = pt.get<float>(object + "sling_weight"); }
+	catch (...) {}
+	try { m_sling_height = pt.get<float>(object + "sling_height"); }
+	catch (...) {}
+	try { m_sling_size_x = pt.get<float>(object + "sling_size_x"); }
+	catch (...) {}
+	try { m_sling_size_y = pt.get<float>(object + "sling_size_y"); }
+	catch (...) {}
+	try { m_sling_size_z = pt.get<float>(object + "sling_size_z"); }
+	catch (...) {}
+	try { m_sling_cw_x = pt.get<float>(object + "sling_cw_x"); }
+	catch (...) {}
+	try { m_sling_cw_y = pt.get<float>(object + "sling_cw_y"); }
+	catch (...) {}
+	try { m_sling_cw_z = pt.get<float>(object + "sling_cw_z"); }
+	catch (...) {}
+	try { m_sling_friction_glide = pt.get<float>(object + "sling_friction_glide"); }
+	catch (...) {}
+	try { m_sling_friction_static = pt.get<float>(object + "sling_friction_static"); }
+	catch (...) {}
+
 	object_counter++;
 
 	return true;
@@ -237,6 +290,7 @@ bool HRM_Object::LoadObject()
 	if (m_obj_ref || m_probe) DestroyInstance();
 
 	XPLMLookupObjects(m_obj_path.c_str(), 0, 0, load_cb, &m_obj_ref);
+	if (m_obj_ref == NULL)	m_obj_ref = XPLMLoadObject(m_obj_path.c_str());
 
 	if (!m_obj_ref)
 	{
