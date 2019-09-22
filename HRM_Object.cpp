@@ -167,7 +167,7 @@ void HRM_Object::SetPosition(double zero_latitude, double zero_longitude, double
 		dr.heading = total_heading;
 		dr.roll = total_roll;
 
-		XPLMInstanceSetPosition(m_inst_ref, &dr, &m_angle);
+		if (m_is_slingload == false) XPLMInstanceSetPosition(m_inst_ref, &dr, &m_angle);
 
 	}
 	else

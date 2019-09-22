@@ -214,6 +214,7 @@ public:
 	XPLMCommandRef m_HSL_enable = NULL;
 	XPLMCommandRef m_HSL_disable = NULL;
 	XPLMCommandRef m_HSL_connect = NULL;
+	XPLMCommandRef m_HSL_release = NULL;
 	XPLMCommandRef m_HSL_place_coordinates = NULL;
 	XPLMCommandRef m_HSL_place_ground = NULL;
 	XPLMCommandRef m_HSL_update_objects = NULL;

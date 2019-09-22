@@ -322,6 +322,9 @@ void HRM_PlugIn::ConfigureHSL()
 		XPLMSetDatai(m_i_HSL_cargo_instanced_drawing, mp_HSL_slingload_object->m_sling_instanced_drawing);
 		XPLMSetDatai(m_i_HSL_cargo_is_bambi, mp_HSL_slingload_object->m_sling_is_bambi_bucket);
 		
+		mp_cm_mission->SetObjectPosition();
+		XPLMSetDatad(m_d_HSL_latitude, mp_HSL_slingload_object->m_latitude);
+		XPLMSetDatad(m_d_HSL_longitude, mp_HSL_slingload_object->m_longitude);
 		
 		XPLMSetDataf(m_f_HSL_cargo_height, mp_HSL_slingload_object->m_sling_height);
 		XPLMSetDataf(m_f_HSL_cargo_mass, mp_HSL_slingload_object->m_sling_weight);
@@ -334,6 +337,7 @@ void HRM_PlugIn::ConfigureHSL()
 
 		XPLMCommandOnce(m_HSL_enable);
 		XPLMCommandOnce(m_HSL_update_objects);
+		XPLMCommandOnce(m_HSL_place_coordinates);
 	}
 
 }
@@ -2082,6 +2086,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 					if( m_HSL_enable == NULL)				m_HSL_enable = XPLMFindCommand("HSL/Sling_Enable");
 					if (m_HSL_disable == NULL)				m_HSL_disable = XPLMFindCommand("HSL/Sling_Disable");
 					if( m_HSL_connect == NULL)				m_HSL_connect = XPLMFindCommand("HSL/Load_Connect");
+					if (m_HSL_release == NULL)				m_HSL_release = XPLMFindCommand("HSL/Load_Release");
 					if( m_HSL_place_coordinates == NULL)	m_HSL_place_coordinates = XPLMFindCommand("HSL/Load_On_Coordinates");
 					if( m_HSL_place_ground == NULL)			m_HSL_place_ground = XPLMFindCommand("HSL/Load_On_Ground");
 					if( m_HSL_update_objects == NULL)		m_HSL_update_objects = XPLMFindCommand("HSL/UpdateObjects");
@@ -2092,7 +2097,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 					if ( m_d_HSL_latitude == NULL) m_d_HSL_latitude = XPLMFindDataRef("HSL/Cargo/SetLatitude");
 					if ( m_d_HSL_longitude == NULL) m_d_HSL_longitude = XPLMFindDataRef("HSL/Cargo/SetLongitude");
 
-					if (m_f_HSL_rope_length == NULL) m_f_HSL_rope_length = XPLMFindDataRef("HSL/Cargo/RopeLengthNormal");
+					if (m_f_HSL_rope_length == NULL) m_f_HSL_rope_length = XPLMFindDataRef("HSL/RopeLengthNormal");
 
 					if ( m_i_HSL_cargo_is_bambi == NULL) m_i_HSL_cargo_is_bambi = XPLMFindDataRef("HSL/Cargo/IsBambiBucket");
 					if ( m_i_HSL_cargo_connected == NULL) m_i_HSL_cargo_connected = XPLMFindDataRef("HSL/Cargo/Connected");
@@ -2517,10 +2522,10 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 								// Calculate offset of our operator relative to the patient in aircraft coordinates
 								m_sling_load_patient_distance_side = patient_distance_h * sin(m_sling_load_patient_heading * M_PI / 180.0f);
 								m_sling_load_patient_distance_forward = patient_distance_h * cos(m_sling_load_patient_heading * M_PI / 180.0f);
-								m_sling_load_patient_distance_alt = hook_elev - m_412_patient_elev;
+								m_sling_load_patient_distance_alt = hook_elev - mp_HSL_slingload_object->m_sling_elevation;
 
 								// Speech output
-								if ((m_sling_load_patient_distance <= m_cm_sling_say_distance) && (m_412_crew_on == true))
+								if (m_sling_load_patient_distance <= m_cm_sling_say_distance)
 								{
 									m_cm_say_timer += m_time_delta;
 
@@ -2979,9 +2984,14 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 
 				if ((mp_cm_mission->IsSlingLoad() == true) && (m_sling_load_plugin == HRM::HSL))
 				{
-					if (m_lf_HSL_rope_length <= HRM::hsl_rope_length_min)
+					if ((m_lf_HSL_rope_length <= HRM::hsl_rope_length_min) && (m_li_HSL_cargo_connected > 0))
 					{
 						XPLMCommandOnce(m_HSL_disable);
+						XPLMCommandOnce(m_HSL_release);
+
+						float payload = XPLMGetDataf(m_f_payload);
+						XPLMSetDataf(m_f_payload, payload + mp_HSL_slingload_object->m_sling_weight);
+
 						IvyPlaySound(6, -1, -1);
 					}
 				}
