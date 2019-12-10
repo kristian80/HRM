@@ -48,6 +48,12 @@ bool HRM_Mission::IsSlingLoad()
 	return false;
 }
 
+bool HRM_Mission::IsFire()
+{
+	if ((m_mission_type >= 4) && (m_mission_type <= 7)) return true;
+	return false;
+}
+
 void HRM_Mission::RemoveMission(void)
 {
 	for (auto p_obj : m_object_vector)

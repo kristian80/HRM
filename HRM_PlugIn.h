@@ -58,6 +58,11 @@ public:
 	std::vector<HRM_Mission *> m_sar_missions;
 	std::vector<HRM_Mission *> m_sling_missions;
 
+	std::vector<HRM_Mission*> m_street_fire_missions;
+	std::vector<HRM_Mission*> m_urban_fire_missions;
+	std::vector<HRM_Mission*> m_sar_fire_missions;
+	std::vector<HRM_Mission*> m_sling_fire_missions;
+
 	std::vector<HRM_Waypoint *> m_street_waypoints;
 	std::vector<HRM_Waypoint *> m_urban_waypoints;
 	std::vector<HRM_Waypoint *> m_sar_waypoints;
@@ -80,6 +85,7 @@ public:
 	bool m_urban_enable = false;
 	bool m_sar_enable = false;
 	bool m_sling_enable = false;
+	bool m_fire_enable = false;
 
 
 	//HRM_Mission *mp_current_mission = NULL;
@@ -219,6 +225,8 @@ public:
 	XPLMCommandRef m_HSL_place_ground = NULL;
 	XPLMCommandRef m_HSL_update_objects = NULL;
 
+	XPLMCommandRef m_HSL_place_fire_coordinates = NULL;
+
 	XPLMDataRef m_d_HSL_latitude = NULL;
 	XPLMDataRef m_d_HSL_longitude = NULL;
 
@@ -240,7 +248,45 @@ public:
 	XPLMDataRef m_fa_HSL_cargo_offset = NULL;
 
 	XPLMDataRef m_ba_HSL_cargo_path = NULL;
+
+	// HSL Fire
+
+	XPLMDataRef m_f_HSL_fire_radius = NULL;
+	XPLMDataRef m_f_HSL_fire_strength_start = NULL;
+	XPLMDataRef m_f_HSL_fire_strength_max = NULL;
+	XPLMDataRef m_f_HSL_fire_strength_inc = NULL;
 	
+
+	XPLMDataRef m_d_HSL_fire_set_lat = NULL;
+	XPLMDataRef m_d_HSL_fire_set_lon = NULL;
+	XPLMDataRef m_f_HSL_fire_set_elev = NULL;
+
+	XPLMDataRef m_f_HSL_fire_count = NULL;
+	XPLMDataRef m_fa_HSL_fire_strength = NULL;
+
+	XPLMDataRef m_i_HSL_fire_create_failed = NULL;
+	XPLMDataRef m_i_HSL_fire_update_positions = NULL;
+
+	XPLMDataRef m_i_HSL_fire_remove = NULL;
+
+	/*float m_lf_HSL_fire_radius = 0;
+	float m_lf_HSL_fire_strength_start = 0;
+	float m_lf_HSL_fire_strenght_max = 0;
+	float m_lf_HSL_fire_strength_inc = 0;
+
+
+	double m_ld_HSL_fire_set_lat = 0;
+	double m_ld_HSL_fire_set_lon = 0;
+	float m_lf_HSL_fire_set_elev = 0;*/
+
+	float m_lf_HSL_fire_count = 0;
+	float m_lfa_HSL_fire_strength[MAX_FIRES];
+
+	int m_li_HSL_fire_create_failed = 0;
+
+	float m_fire_time = 0;
+	
+	//int m_li_HSL_fire_update_positions = 0;
 
 	/*
 	/*strcpy(buffer, "RescueX/objects/Bergwacht_Luftrettungssack.obj");
@@ -512,6 +558,7 @@ public:
 	void PluginMenuHandler(void * in_menu_ref, void * in_item_ref);
 
 	void ConfigureHSL();
+	void ConfigureFire();
 	void MissionCreate();
 	bool FindWaypoint(std::vector<HRM_Waypoint*>* p_waypoint_vector, std::vector<HRM_Waypoint*> &global_waypoint_vector, std::vector<HRM_Waypoint*>& considered_waypoints);
 	void MissionStart();

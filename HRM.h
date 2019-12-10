@@ -80,6 +80,8 @@
 //#define MAX_GRAPH_DATA 1000
 //#define MAX_GRAPH_TIME 100
 
+#define MAX_FIRES 18
+
 struct HRM_Sound
 {
 	int sound_before = -1;
@@ -151,7 +153,9 @@ namespace HRM
 		State_Flight_2,
 		State_At_Hospital,
 		State_Mission_Finished,
-		State_Mission_Cancelled
+		State_Mission_Cancelled,
+		State_Fire_Fighting,
+		State_Fire_Extinguished
 	};
 
 	enum Difficulty
@@ -235,6 +239,21 @@ namespace HRM
 	const int search_range_max = 5000;
 
 	const float hsl_rope_length_min = 0.5;
+
+	const float fire_radius = 3.0f;
+	
+	const float fire_strength_start_easy = 1.0f;
+	const float fire_strength_start_normal = 100.0f;
+	const float fire_strength_start_hard = 500.0f;
+
+	const float fire_strength_inc_easy = 0.0f;
+	const float fire_strength_inc_normal = 0.0f;
+	const float fire_strength_inc_hard = 0.5f;
+
+	const float fire_strength_max = 1000.0f;
+
+
+
 	
 
 

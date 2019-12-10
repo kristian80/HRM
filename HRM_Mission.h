@@ -54,6 +54,7 @@ public:
 	void SetObjectPosition();
 
 	bool IsSlingLoad();
+	bool IsFire();
 
 	void RemoveMission(void);
 	void RemovePatients(void);

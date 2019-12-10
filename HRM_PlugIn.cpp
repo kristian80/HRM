@@ -342,6 +342,11 @@ void HRM_PlugIn::ConfigureHSL()
 
 }
 
+void HRM_PlugIn::ConfigureFire()
+{
+
+}
+
 void HRM_PlugIn::MissionCreate()
 {
 	
@@ -427,6 +432,8 @@ void HRM_PlugIn::MissionCreate()
 
 				p_waypoint_vector = &m_street_waypoints;
 				p_mission_vector = &m_street_missions;
+
+				if (m_fire_enable == true) p_mission_vector = &m_street_fire_missions;
 			}
 			else if (!m_street_enable)	random_type++;
 		}
@@ -439,6 +446,8 @@ void HRM_PlugIn::MissionCreate()
 
 				p_waypoint_vector = &m_urban_waypoints;
 				p_mission_vector = &m_urban_missions;
+
+				if (m_fire_enable == true) p_mission_vector = &m_urban_fire_missions;
 			}
 			else if (!m_urban_enable)	random_type++;
 		}
@@ -451,6 +460,8 @@ void HRM_PlugIn::MissionCreate()
 
 				p_waypoint_vector = &m_sar_waypoints;
 				p_mission_vector = &m_sar_missions;
+
+				if (m_fire_enable == true) p_mission_vector = &m_sar_fire_missions;
 			}
 			else if (!m_sar_enable)	random_type++;
 		}
@@ -463,6 +474,8 @@ void HRM_PlugIn::MissionCreate()
 
 				p_waypoint_vector = &m_sling_waypoints;
 				p_mission_vector = &m_sling_missions;
+
+				if (m_fire_enable == true) p_mission_vector = &m_sling_fire_missions;
 			}
 			else if (!m_sling_enable)	random_type++;
 		}
@@ -527,9 +540,52 @@ void HRM_PlugIn::MissionCreate()
 	// TODO: FSE Airports
 
 	CreateFlightPlan();
+
+	// Fire fighting
+	if (mp_cm_mission->IsFire() == true)
+	{
+		XPLMCommandOnce(m_HSL_enable);
+
+		XPLMSetDataf(m_f_HSL_fire_radius, HRM::fire_radius);
+		XPLMSetDataf(m_f_HSL_fire_strength_max, HRM::fire_strength_max);
+
+		if (m_difficutly == HRM::Easy)
+		{
+			XPLMSetDataf(m_f_HSL_fire_strength_start, HRM::fire_strength_start_easy);
+			XPLMSetDataf(m_f_HSL_fire_strength_inc, HRM::fire_strength_inc_easy);
+
+		}
+		else if (m_difficutly == HRM::Normal)
+		{
+			XPLMSetDataf(m_f_HSL_fire_strength_start, HRM::fire_strength_start_normal);
+			XPLMSetDataf(m_f_HSL_fire_strength_inc, HRM::fire_strength_inc_normal);
+		}
+		else
+		{
+			XPLMSetDataf(m_f_HSL_fire_strength_start, HRM::fire_strength_start_hard);
+			XPLMSetDataf(m_f_HSL_fire_strength_inc, HRM::fire_strength_inc_hard);
+		}
+
+
+
+		for (auto p_object : mp_cm_mission->m_object_vector)
+		{
+			if (p_object->m_is_patient == true)
+			{
+				XPLMSetDatad(m_d_HSL_fire_set_lat, p_object->m_latitude);
+				XPLMSetDatad(m_d_HSL_fire_set_lon, p_object->m_longitude);
+				XPLMSetDataf(m_f_HSL_fire_set_elev, p_object->m_elevation);
+
+				XPLMCommandOnce(m_HSL_place_fire_coordinates);
+
+			}
+		}
+		m_fire_time = 0;
+		mp_cm_mission->RemovePatients();
+	}
 	
 	// Sling Load
-	if (mp_cm_mission->IsSlingLoad() == true)
+	else if (mp_cm_mission->IsSlingLoad() == true)
 	{
 
 		m_sling_load_meter_lat = calc_distance_m(mp_cm_waypoint->latitude, mp_cm_waypoint->longitude, mp_cm_waypoint->latitude + 1, mp_cm_waypoint->longitude);
@@ -675,7 +731,12 @@ void HRM_PlugIn::MissionStart()
 		IvyPlaySound(2, -1, -1);
 	}
 
-	if ((m_li_battery_on == 0) && (m_lia_engines_running[0] == 0) && (m_lia_engines_running[1] == 0))
+	if (mp_cm_mission->IsFire() == true)
+	{
+		pHRM->m_mission_state = HRM::State_Fire_Fighting;
+	}
+
+	else if ((m_li_battery_on == 0) && (m_lia_engines_running[0] == 0) && (m_lia_engines_running[1] == 0))
 	{
 		if (m_difficutly == HRM::Hard) m_mission_preflight_countdown = HRM::preflight_time_hard;
 		else if (m_difficutly == HRM::Normal) m_mission_preflight_countdown = HRM::preflight_time_normal;
@@ -920,6 +981,8 @@ void HRM_PlugIn::MissionReset()
 	m_cm_say_timer = 0;
 	m_cm_say_state = 0;
 	mp_HSL_slingload_object = 0;
+
+	if (m_i_HSL_fire_remove != NULL) XPLMSetDatai(m_i_HSL_fire_remove, 1);
 }
 
 
@@ -1665,6 +1728,7 @@ void HRM_PlugIn::SaveConfig()
 	pt.put("HRM.urban_enable", m_urban_enable);
 	pt.put("HRM.sar_enable", m_sar_enable);
 	pt.put("HRM.sling_enable", m_sling_enable);
+	pt.put("HRM.fire_enable", m_fire_enable);
 
 	pt.put("HRM.scenario_position_type", (int) m_cm_use_position);
 	pt.put("HRM.scenario_min_distance_nm", m_cm_min_distance);
@@ -1754,6 +1818,9 @@ void HRM_PlugIn::ReadConfig()
 	catch (...) { HRMDebugString("Ini File: Entry not found."); }
 
 	try { m_sling_enable = pt.get<bool>("HRM.sling_enable"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_fire_enable = pt.get<bool>("HRM.fire_enable"); }
 	catch (...) { HRMDebugString("Ini File: Entry not found."); }
 
 	try { m_cm_use_position = (HRM::Scenario_Position) pt.get<int>("HRM.scenario_position_type"); }
@@ -1892,6 +1959,10 @@ void HRM_PlugIn::ReadMissions()
 					else if (p_mission->m_mission_type == 1)		m_urban_missions.push_back(p_mission);
 					else if (p_mission->m_mission_type == 2)		m_sar_missions.push_back(p_mission);
 					else if (p_mission->m_mission_type == 3)		m_sling_missions.push_back(p_mission);
+					else if (p_mission->m_mission_type == 4)		m_street_fire_missions.push_back(p_mission);
+					else if (p_mission->m_mission_type == 5)		m_urban_fire_missions.push_back(p_mission);
+					else if (p_mission->m_mission_type == 6)		m_sar_fire_missions.push_back(p_mission);
+					else if (p_mission->m_mission_type == 7)		m_sling_fire_missions.push_back(p_mission);
 					else delete p_mission;
 				}
 				else delete p_mission;
@@ -2011,7 +2082,11 @@ void HRM_PlugIn::ReadDataSlow()
 	m_lf_HSL_rope_length = XPLMGetDataf(m_f_HSL_rope_length);
 	
 	 
+	m_lf_HSL_fire_count = XPLMGetDataf(m_f_HSL_fire_count);
+	XPLMGetDatavf(m_fa_HSL_fire_strength, m_lfa_HSL_fire_strength, 0, MAX_FIRES);
+	
 
+	m_li_HSL_fire_create_failed = XPLMGetDatai(m_i_HSL_fire_create_failed);
 
 }
 
@@ -2080,7 +2155,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			
 			if ((m_mission_state == HRM::State_Create_Mission) && (m_window_visible == true))
 			{
-				if ((m_sling_enable == true) && (m_sling_load_plugin == HRM::HSL) && (m_HSL_found == false))
+				if (((m_sling_enable == true) || (m_fire_enable == true)) && (m_sling_load_plugin == HRM::HSL) && (m_HSL_found == false))
 				{
 					
 					if( m_HSL_enable == NULL)				m_HSL_enable = XPLMFindCommand("HSL/Sling_Enable");
@@ -2088,10 +2163,11 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 					if( m_HSL_connect == NULL)				m_HSL_connect = XPLMFindCommand("HSL/Load_Connect");
 					if (m_HSL_release == NULL)				m_HSL_release = XPLMFindCommand("HSL/Load_Release");
 					if( m_HSL_place_coordinates == NULL)	m_HSL_place_coordinates = XPLMFindCommand("HSL/Load_On_Coordinates");
+					if (m_HSL_place_fire_coordinates == NULL)	m_HSL_place_fire_coordinates = XPLMFindCommand("HSL/Fire_On_Coordinates");
 					if( m_HSL_place_ground == NULL)			m_HSL_place_ground = XPLMFindCommand("HSL/Load_On_Ground");
 					if( m_HSL_update_objects == NULL)		m_HSL_update_objects = XPLMFindCommand("HSL/UpdateObjects");
 
-
+					
 
 
 					if ( m_d_HSL_latitude == NULL) m_d_HSL_latitude = XPLMFindDataRef("HSL/Cargo/SetLatitude");
@@ -2116,6 +2192,22 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 
 					if ( m_ba_HSL_cargo_path == NULL) m_ba_HSL_cargo_path = XPLMFindDataRef("HSL/CargoObjectPath");
 
+					if (  m_f_HSL_fire_radius == NULL) m_f_HSL_fire_radius = XPLMFindDataRef("HSL/Fire/WaterRadius");
+					if (  m_f_HSL_fire_strength_start == NULL) m_f_HSL_fire_strength_start = XPLMFindDataRef("HSL/Fire/StrengthStart");
+					if (  m_f_HSL_fire_strength_max == NULL) m_f_HSL_fire_strength_max = XPLMFindDataRef("HSL/Fire/StrengthMax");
+					if (  m_f_HSL_fire_strength_inc == NULL) m_f_HSL_fire_strength_inc = XPLMFindDataRef("HSL/Fire/StrengthIncrease");
+
+
+					if (  m_d_HSL_fire_set_lat == NULL) m_d_HSL_fire_set_lat = XPLMFindDataRef("HSL/Fire/SetLatitude");
+					if (  m_d_HSL_fire_set_lon == NULL) m_d_HSL_fire_set_lon = XPLMFindDataRef("HSL/Fire/SetLongitude");
+					if (  m_f_HSL_fire_set_elev == NULL) m_f_HSL_fire_set_elev = XPLMFindDataRef("HSL/Fire/SetElevation");
+
+					if (  m_f_HSL_fire_count == NULL) m_f_HSL_fire_count = XPLMFindDataRef("HSL/Fire/Count");
+					if (  m_fa_HSL_fire_strength == NULL) m_fa_HSL_fire_strength = XPLMFindDataRef("HSL/Fire/FireStrengh");
+
+					if (  m_i_HSL_fire_create_failed == NULL) m_i_HSL_fire_create_failed = XPLMFindDataRef("HSL/Fire/CreateFailed");
+					if (  m_i_HSL_fire_update_positions == NULL) m_i_HSL_fire_update_positions = XPLMFindDataRef("HSL/Fire/UpdatePositions");
+					if (m_i_HSL_fire_remove == NULL)		m_i_HSL_fire_remove = XPLMFindDataRef("HSL/Fire/RemoveFires");
 
 					if (m_d_HSL_latitude != NULL)
 					{
@@ -2125,6 +2217,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 					else
 					{
 						m_sling_enable = false;
+						m_fire_enable = false;
 						m_HSL_not_found = true;
 					}
 				}
@@ -3040,6 +3133,19 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			else if (m_mission_state == HRM::State_Mission_Cancelled)
 			{
 				
+			}
+
+			else if (pHRM->m_mission_state == HRM::State_Fire_Fighting)
+			{
+				m_fire_time += m_time_delta;
+				if (m_lf_HSL_fire_count < 1.0f)
+				{
+					pHRM->m_mission_state = HRM::State_Fire_Extinguished;
+				}
+			}
+			else if (pHRM->m_mission_state == HRM::State_Fire_Extinguished)
+			{
+
 			}
 
 			// End of Slow Computations

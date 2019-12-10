@@ -134,10 +134,15 @@ void HRMImguiWidget::buildInterface()
 		ImGui::Checkbox("Urban Accidents", &(pHRM->m_urban_enable));
 		ImGui::Checkbox("Search and Rescue", &(pHRM->m_sar_enable));
 		ImGui::Checkbox("Sling Line", &(pHRM->m_sling_enable));
+		ImGui::Checkbox("Fire Fighting", &(pHRM->m_fire_enable));
 
-		//if (pHRM->m_sling_enable == true)
+		//if /(pHRM->m_sling_enable == true) || (pHRM->m_fire_enable == true))
 		{
-			if (ImGui::RadioButton("HSL", pHRM->m_sling_load_plugin == HRM::HSL))	pHRM->m_sling_load_plugin = HRM::HSL;
+			if (ImGui::RadioButton("HSL", pHRM->m_sling_load_plugin == HRM::HSL))
+			{
+				pHRM->m_sling_load_plugin = HRM::HSL;
+				
+			}
 			if (ImGui::RadioButton("AB 412", pHRM->m_sling_load_plugin == HRM::AB412))				pHRM->m_sling_load_plugin = HRM::AB412;
 
 		}
@@ -986,6 +991,112 @@ void HRMImguiWidget::buildInterface()
 		}
 
 
+	}
+	else if (pHRM->m_mission_state == HRM::State_Fire_Fighting)
+	{
+
+		ImGui::Text("Mission Status: Fire Fighting");
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		
+
+		ImGui::Text("Time required: ");
+		ImGui::SameLine();
+		ImGui::Text(HRM_PlugIn::CreateTimeString(pHRM->m_fire_time).c_str());
+
+		ImGui::Spacing();
+		ImGui::Text("Fires Remaining: %i", (int) pHRM->m_lf_HSL_fire_count);
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		for (int index = 0; index < pHRM->m_lf_HSL_fire_count; index++)
+		{
+			ImGui::Text("Fire #%i:", index + 1);
+			ImGui::SameLine();
+			ImGui::ProgressBar(pHRM->m_lfa_HSL_fire_strength[index] / HRM::fire_strength_max);
+		}
+
+		// Cancel Button
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		ImGui::Spacing();
+		ImGui::Spacing();
+		ImGui::Spacing();
+		ImGui::Spacing();
+
+		if (pHRM->m_cm_cancelling == false)
+		{
+			if (ImGui::Button("Cancel Mission", ImVec2(410, 20)))
+			{
+				pHRM->m_cm_cancelling = true;
+			}
+		}
+		else
+		{
+			if (ImGui::Button("Are you sure?", ImVec2(200, 20)))
+			{
+				pHRM->MissionCancel();
+				pHRM->m_cm_cancelling = false;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Continue", ImVec2(200, 20)))
+			{
+				pHRM->m_cm_cancelling = false;
+			}
+		}
+	}
+	else if (pHRM->m_mission_state == HRM::State_Fire_Extinguished)
+	{
+
+	ImGui::Text("Mission Status: Fire Extinguished");
+
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Spacing();
+
+	ImGui::Text("Time required: ");
+	ImGui::SameLine();
+	ImGui::Text(HRM_PlugIn::CreateTimeString(pHRM->m_fire_time).c_str());
+
+	// Cancel Button
+
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Spacing();
+
+	ImGui::Spacing();
+	ImGui::Spacing();
+	ImGui::Spacing();
+	ImGui::Spacing();
+
+	if (pHRM->m_cm_cancelling == false)
+	{
+		if (ImGui::Button("Cancel Mission", ImVec2(410, 20)))
+		{
+			pHRM->m_cm_cancelling = true;
+		}
+	}
+	else
+	{
+		if (ImGui::Button("Are you sure?", ImVec2(200, 20)))
+		{
+			pHRM->MissionCancel();
+			pHRM->m_cm_cancelling = false;
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Continue", ImVec2(200, 20)))
+		{
+			pHRM->m_cm_cancelling = false;
+		}
+	}
 	}
 	else if (pHRM->m_mission_state == HRM::State_Mission_Cancelled)
 	{
