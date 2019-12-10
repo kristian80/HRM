@@ -1014,6 +1014,17 @@ void HRMImguiWidget::buildInterface()
 		ImGui::Separator();
 		ImGui::Spacing();
 
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, color_green);
+		ImGui::Text("Water Level: ");
+		ImGui::ProgressBar(pHRM->m_lf_HSL_bambi_water_level);
+		ImGui::PopStyleColor();
+
+		
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
 		for (int index = 0; index < pHRM->m_lf_HSL_fire_count; index++)
 		{
 			ImGui::Text("Fire #%i:", index + 1);

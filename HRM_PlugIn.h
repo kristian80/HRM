@@ -269,6 +269,8 @@ public:
 
 	XPLMDataRef m_i_HSL_fire_remove = NULL;
 
+	XPLMDataRef m_f_HSL_bambi_water_level = NULL;
+
 	/*float m_lf_HSL_fire_radius = 0;
 	float m_lf_HSL_fire_strength_start = 0;
 	float m_lf_HSL_fire_strenght_max = 0;
@@ -285,6 +287,7 @@ public:
 	int m_li_HSL_fire_create_failed = 0;
 
 	float m_fire_time = 0;
+	float m_lf_HSL_bambi_water_level = 0;
 	
 	//int m_li_HSL_fire_update_positions = 0;
 

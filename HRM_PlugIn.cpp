@@ -344,6 +344,35 @@ void HRM_PlugIn::ConfigureHSL()
 
 void HRM_PlugIn::ConfigureFire()
 {
+	char buffer[2048];
+	strcpy(buffer, "./oggetti elitrasportabili/Swisscreations_bambi_bucket_8ft.obj");
+	XPLMSetDatab(m_ba_HSL_cargo_path, buffer, 0, sizeof(buffer));
+	XPLMSetDatai(m_i_HSL_cargo_instanced_drawing, 0);
+	XPLMSetDatai(m_i_HSL_cargo_is_bambi, true);
+
+	XPLMSetDataf(m_f_HSL_cargo_height, 1.35f);
+	XPLMSetDataf(m_f_HSL_cargo_mass, 40);
+	XPLMSetDataf(m_f_HSL_cargo_friction_glide, 0.35f);
+	XPLMSetDataf(m_f_HSL_cargo_friction_static, 0.55f);
+
+	float x=1, y=1, z=1;
+
+	SetVectorDataRef(m_fa_HSL_cargo_vector_size, x, y, z);
+
+	x = 0.8;
+	y = 0.8;
+	z = 0.8;
+
+	SetVectorDataRef(m_fa_HSL_cargo_vector_cw, x, y, z);
+
+	x = 0;
+	y = 0;
+	z = 0;
+	SetVectorDataRef(m_fa_HSL_cargo_offset, x, y, z);
+
+
+	XPLMCommandOnce(m_HSL_update_objects);
+	XPLMCommandOnce(m_HSL_connect);
 
 }
 
@@ -582,6 +611,8 @@ void HRM_PlugIn::MissionCreate()
 		}
 		m_fire_time = 0;
 		mp_cm_mission->RemovePatients();
+
+		ConfigureFire();
 	}
 	
 	// Sling Load
@@ -2023,6 +2054,8 @@ void HRM_PlugIn::ReadDataFast()
 
 	m_li_paused = XPLMGetDatai(m_i_paused);
 	m_li_replay = XPLMGetDatai(m_i_replay);
+
+	m_lf_HSL_bambi_water_level = XPLMGetDataf(m_f_HSL_bambi_water_level);
 }
 
 void HRM_PlugIn::ReadDataSlow()
@@ -2207,7 +2240,9 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 
 					if (  m_i_HSL_fire_create_failed == NULL) m_i_HSL_fire_create_failed = XPLMFindDataRef("HSL/Fire/CreateFailed");
 					if (  m_i_HSL_fire_update_positions == NULL) m_i_HSL_fire_update_positions = XPLMFindDataRef("HSL/Fire/UpdatePositions");
-					if (m_i_HSL_fire_remove == NULL)		m_i_HSL_fire_remove = XPLMFindDataRef("HSL/Fire/RemoveFires");
+					if (  m_i_HSL_fire_remove == NULL)		m_i_HSL_fire_remove = XPLMFindDataRef("HSL/Fire/RemoveFires");
+
+					if (m_f_HSL_bambi_water_level == NULL)		m_f_HSL_bambi_water_level = XPLMFindDataRef("HSL/Cargo/BambiBucketWaterLevel");
 
 					if (m_d_HSL_latitude != NULL)
 					{
