@@ -243,14 +243,16 @@ namespace HRM
 	const float fire_radius = 3.0f;
 	
 	const float fire_strength_start_easy = 1.0f;
-	const float fire_strength_start_normal = 100.0f;
-	const float fire_strength_start_hard = 500.0f;
+	const float fire_strength_start_normal = 50.0f;
+	const float fire_strength_start_hard = 250.0f;
 
 	const float fire_strength_inc_easy = 0.0f;
 	const float fire_strength_inc_normal = 0.0f;
 	const float fire_strength_inc_hard = 0.5f;
 
-	const float fire_strength_max = 1000.0f;
+	const float fire_strength_max_easy = 1.0f;
+	const float fire_strength_max_normal = 50.0f;
+	const float fire_strength_max_hard = 500.0f;
 
 
 

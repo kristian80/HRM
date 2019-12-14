@@ -353,15 +353,17 @@ void HRM_PlugIn::ConfigureFire()
 	XPLMSetDataf(m_f_HSL_cargo_height, 1.35f);
 	XPLMSetDataf(m_f_HSL_cargo_mass, 40);
 	XPLMSetDataf(m_f_HSL_cargo_friction_glide, 0.35f);
-	XPLMSetDataf(m_f_HSL_cargo_friction_static, 0.55f);
+	XPLMSetDataf(m_f_HSL_cargo_friction_static, 0.65f);
 
-	float x=1, y=1, z=1;
+	m_HSL_bambi_size = std::cbrt(((float) m_HSL_bambi_volume) / 1000.0f);
+
+	float x= m_HSL_bambi_size, y= m_HSL_bambi_size, z= m_HSL_bambi_size;
 
 	SetVectorDataRef(m_fa_HSL_cargo_vector_size, x, y, z);
 
-	x = 0.8;
-	y = 0.8;
-	z = 0.8;
+	x = 0.5;
+	y = 0.5;
+	z = 0.5;
 
 	SetVectorDataRef(m_fa_HSL_cargo_vector_cw, x, y, z);
 
@@ -576,31 +578,38 @@ void HRM_PlugIn::MissionCreate()
 		XPLMCommandOnce(m_HSL_enable);
 
 		XPLMSetDataf(m_f_HSL_fire_radius, HRM::fire_radius);
-		XPLMSetDataf(m_f_HSL_fire_strength_max, HRM::fire_strength_max);
+		
 
 		if (m_difficutly == HRM::Easy)
 		{
 			XPLMSetDataf(m_f_HSL_fire_strength_start, HRM::fire_strength_start_easy);
 			XPLMSetDataf(m_f_HSL_fire_strength_inc, HRM::fire_strength_inc_easy);
+			XPLMSetDataf(m_f_HSL_fire_strength_max, HRM::fire_strength_max_easy);
+			m_fire_strength_max = HRM::fire_strength_max_easy;
 
 		}
 		else if (m_difficutly == HRM::Normal)
 		{
 			XPLMSetDataf(m_f_HSL_fire_strength_start, HRM::fire_strength_start_normal);
 			XPLMSetDataf(m_f_HSL_fire_strength_inc, HRM::fire_strength_inc_normal);
+			XPLMSetDataf(m_f_HSL_fire_strength_max, HRM::fire_strength_max_normal);
+			m_fire_strength_max = HRM::fire_strength_max_normal;
 		}
 		else
 		{
 			XPLMSetDataf(m_f_HSL_fire_strength_start, HRM::fire_strength_start_hard);
 			XPLMSetDataf(m_f_HSL_fire_strength_inc, HRM::fire_strength_inc_hard);
+			XPLMSetDataf(m_f_HSL_fire_strength_max, HRM::fire_strength_max_hard);
+			m_fire_strength_max = HRM::fire_strength_max_hard;
 		}
 
 
-
+		m_cm_fire_count = 0;
 		for (auto p_object : mp_cm_mission->m_object_vector)
 		{
 			if (p_object->m_is_patient == true)
 			{
+				m_cm_fire_count++;
 				XPLMSetDatad(m_d_HSL_fire_set_lat, p_object->m_latitude);
 				XPLMSetDatad(m_d_HSL_fire_set_lon, p_object->m_longitude);
 				XPLMSetDataf(m_f_HSL_fire_set_elev, p_object->m_elevation);
@@ -1012,6 +1021,9 @@ void HRM_PlugIn::MissionReset()
 	m_cm_say_timer = 0;
 	m_cm_say_state = 0;
 	mp_HSL_slingload_object = 0;
+
+	m_cm_fire_count = 0;
+	m_cm_fire_create_failed = false;
 
 	if (m_i_HSL_fire_remove != NULL) XPLMSetDatai(m_i_HSL_fire_remove, 1);
 }
@@ -1789,6 +1801,7 @@ void HRM_PlugIn::SaveConfig()
 	pt.put("HRM.sling_load_time_min", m_sling_load_time_min);
 	pt.put("HRM.sling_say_distance", m_cm_sling_say_distance);
 	pt.put("HRM.sling_say_time", m_cm_sling_say_time);
+	pt.put("HRM.fire_bambi_volume", m_HSL_bambi_volume);
 
 	
 	boost::property_tree::ini_parser::write_ini(m_config_path + "HRM.ini", pt);
@@ -1928,6 +1941,9 @@ void HRM_PlugIn::ReadConfig()
 	catch (...) { HRMDebugString("Ini File: Entry not found."); }
 
 	try { m_wpt_path = pt.get<std::string>("HRM.user_wpt_file_path"); }
+	catch (...) { HRMDebugString("Ini File: Entry not found."); }
+
+	try { m_HSL_bambi_volume = pt.get<float>("HRM.fire_bambi_volume"); }
 	catch (...) { HRMDebugString("Ini File: Entry not found."); }
 
 }
@@ -2236,7 +2252,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 					if (  m_f_HSL_fire_set_elev == NULL) m_f_HSL_fire_set_elev = XPLMFindDataRef("HSL/Fire/SetElevation");
 
 					if (  m_f_HSL_fire_count == NULL) m_f_HSL_fire_count = XPLMFindDataRef("HSL/Fire/Count");
-					if (  m_fa_HSL_fire_strength == NULL) m_fa_HSL_fire_strength = XPLMFindDataRef("HSL/Fire/FireStrengh");
+					if (  m_fa_HSL_fire_strength == NULL) m_fa_HSL_fire_strength = XPLMFindDataRef("HSL/Fire/FireStrength");
 
 					if (  m_i_HSL_fire_create_failed == NULL) m_i_HSL_fire_create_failed = XPLMFindDataRef("HSL/Fire/CreateFailed");
 					if (  m_i_HSL_fire_update_positions == NULL) m_i_HSL_fire_update_positions = XPLMFindDataRef("HSL/Fire/UpdatePositions");
@@ -2526,7 +2542,13 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			}
 			else if (m_mission_state == HRM::State_Plan_Flight)
 			{
-
+				if (m_fire_enable == true)
+				{
+					if (m_cm_fire_count > m_lf_HSL_fire_count)
+						m_cm_fire_create_failed = true;
+					else
+						m_cm_fire_create_failed = false;
+				}
 			}
 			else if (m_mission_state == HRM::State_Pre_Flight)
 			{

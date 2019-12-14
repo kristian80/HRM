@@ -158,7 +158,9 @@ public:
 	float m_HSL_size_empty = 0;
 	float m_HSL_size_full = 15;
 
-	float m_HSL_offset = 0.75;
+	float m_HSL_offset = 0.75f;
+	float m_HSL_bambi_size = 1.0f;
+	int m_HSL_bambi_volume = 1000;
 
 	bool m_course_limit_enable = false;
 	int m_course_limit_start = 0;
@@ -180,6 +182,9 @@ public:
 	bool m_custom_icao_exists = false;
 	bool m_HSL_not_found = false;
 	bool m_cm_patient_sight_said = false;
+	bool m_cm_fire_create_failed = false;
+
+	int m_cm_fire_count = 0;
 
 	
 	
@@ -288,6 +293,8 @@ public:
 
 	float m_fire_time = 0;
 	float m_lf_HSL_bambi_water_level = 0;
+	float m_fire_strength_max = 1;
+	
 	
 	//int m_li_HSL_fire_update_positions = 0;
 

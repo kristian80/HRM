@@ -130,11 +130,24 @@ void HRMImguiWidget::buildInterface()
 		if (ImGui::RadioButton("Normal", pHRM->m_difficutly == HRM::Normal))	pHRM->m_difficutly = HRM::Normal;
 		if (ImGui::RadioButton("Hard", pHRM->m_difficutly == HRM::Hard))		pHRM->m_difficutly = HRM::Hard;
 
-		ImGui::Checkbox("Street Accidents", &(pHRM->m_street_enable));
-		ImGui::Checkbox("Urban Accidents", &(pHRM->m_urban_enable));
-		ImGui::Checkbox("Search and Rescue", &(pHRM->m_sar_enable));
-		ImGui::Checkbox("Sling Line", &(pHRM->m_sling_enable));
+		if (pHRM->m_fire_enable == false)
+		{
+
+			ImGui::Checkbox("Street Accidents", &(pHRM->m_street_enable));
+			ImGui::Checkbox("Urban Accidents", &(pHRM->m_urban_enable));
+			ImGui::Checkbox("Search and Rescue", &(pHRM->m_sar_enable));
+			ImGui::Checkbox("Sling Line", &(pHRM->m_sling_enable));
+		}
+		else
+		{
+			ImGui::Checkbox("Street Fire", &(pHRM->m_street_enable));
+			ImGui::Checkbox("Urban Fire", &(pHRM->m_urban_enable));
+			ImGui::Checkbox("Outdoor Fire", &(pHRM->m_sar_enable));
+			ImGui::Checkbox("Slope Fire", &(pHRM->m_sling_enable));
+		}
 		ImGui::Checkbox("Fire Fighting", &(pHRM->m_fire_enable));
+
+		
 
 		//if /(pHRM->m_sling_enable == true) || (pHRM->m_fire_enable == true))
 		{
@@ -161,7 +174,14 @@ void HRMImguiWidget::buildInterface()
 			ImGui::PopStyleColor();
 		}
 
-		//if (pHRM->m_sling_load_plugin == HRM::AB412)
+		if (pHRM->m_fire_enable == true)
+		{
+			ImGui::PushItemWidth(80);
+			ImGui::Text("Bambi Bucket");
+			ImGui::SliderInt("Volume [l]", &(pHRM->m_HSL_bambi_volume), 100, 3000, "%.0f");
+			ImGui::PopItemWidth();
+		}
+		else
 		{
 			ImGui::PushItemWidth(80);
 			ImGui::Text("Patient Pickup");
@@ -170,10 +190,7 @@ void HRMImguiWidget::buildInterface()
 			ImGui::PopItemWidth();
 		}
 
-		ImGui::Text("FPL Format:");
-		if (ImGui::RadioButton("XP11", pHRM->m_flight_plan_format == HRM::FPL_XP11))		pHRM->m_flight_plan_format = HRM::FPL_XP11;
-		if (ImGui::RadioButton("XP10", pHRM->m_flight_plan_format == HRM::FPL_XP10))		pHRM->m_flight_plan_format = HRM::FPL_XP10;
-		if (ImGui::RadioButton("GTN GFP", pHRM->m_flight_plan_format == HRM::FPL_GTN))		pHRM->m_flight_plan_format = HRM::FPL_GTN;
+		
 
 
 
@@ -297,6 +314,13 @@ void HRMImguiWidget::buildInterface()
 
 		}
 
+		ImGui::Text("FPL Format:");
+		if (ImGui::RadioButton("XP11", pHRM->m_flight_plan_format == HRM::FPL_XP11))		pHRM->m_flight_plan_format = HRM::FPL_XP11;
+		ImGui::SameLine();
+		if (ImGui::RadioButton("XP10", pHRM->m_flight_plan_format == HRM::FPL_XP10))		pHRM->m_flight_plan_format = HRM::FPL_XP10;
+		ImGui::SameLine();
+		if (ImGui::RadioButton("GTN GFP", pHRM->m_flight_plan_format == HRM::FPL_GTN))		pHRM->m_flight_plan_format = HRM::FPL_GTN;
+
 		ImGui::Columns(1, 0, true);
 
 		if (pHRM->m_flight_plan_format == HRM::FPL_GTN)
@@ -413,6 +437,20 @@ void HRMImguiWidget::buildInterface()
 		{
 			ImGui::PushStyleColor(ImGuiCol_Text, color_red);
 			ImGui::Text("Aircraft already Airborne");
+			ImGui::PopStyleColor();
+		}
+
+		if (pHRM->m_cm_fire_create_failed == true)
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+			ImGui::TextWrapped("Fire creation failed!");
+			ImGui::TextWrapped("Please open X-Plane settings. On the top right of the aircraft selection screen, you will find a button ""AI Aircraft"". Open it and remove all ai aircraft first. Then, add as many as possible. Close the settings, cancel the mission and try again.");
+			ImGui::PopStyleColor();
+		}
+		else if (pHRM->m_fire_enable == true)
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, color_green);
+			ImGui::TextWrapped("Fire creation successful.");
 			ImGui::PopStyleColor();
 		}
 		ImGui::Spacing();
@@ -1014,7 +1052,7 @@ void HRMImguiWidget::buildInterface()
 		ImGui::Separator();
 		ImGui::Spacing();
 
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, color_green);
+		ImGui::PushStyleColor(ImGuiCol_PlotHistogram, color_green);
 		ImGui::Text("Water Level: ");
 		ImGui::ProgressBar(pHRM->m_lf_HSL_bambi_water_level);
 		ImGui::PopStyleColor();
@@ -1024,14 +1062,14 @@ void HRMImguiWidget::buildInterface()
 		ImGui::Spacing();
 		ImGui::Separator();
 		ImGui::Spacing();
-
+		ImGui::PushStyleColor(ImGuiCol_PlotHistogram, color_red);
 		for (int index = 0; index < pHRM->m_lf_HSL_fire_count; index++)
 		{
 			ImGui::Text("Fire #%i:", index + 1);
 			ImGui::SameLine();
-			ImGui::ProgressBar(pHRM->m_lfa_HSL_fire_strength[index] / HRM::fire_strength_max);
+			ImGui::ProgressBar(pHRM->m_lfa_HSL_fire_strength[index] / pHRM->m_fire_strength_max);
 		}
-
+		ImGui::PopStyleColor();
 		// Cancel Button
 
 		ImGui::Spacing();
