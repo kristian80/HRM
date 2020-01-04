@@ -326,10 +326,10 @@ void HRM_PlugIn::ConfigureHSL()
 		XPLMSetDatad(m_d_HSL_latitude, mp_HSL_slingload_object->m_latitude);
 		XPLMSetDatad(m_d_HSL_longitude, mp_HSL_slingload_object->m_longitude);
 		
-		XPLMSetDataf(m_f_HSL_cargo_height, mp_HSL_slingload_object->m_sling_height);
-		XPLMSetDataf(m_f_HSL_cargo_mass, mp_HSL_slingload_object->m_sling_weight);
-		XPLMSetDataf(m_f_HSL_cargo_friction_glide, mp_HSL_slingload_object->m_sling_friction_glide);
-		XPLMSetDataf(m_f_HSL_cargo_friction_static, mp_HSL_slingload_object->m_sling_friction_static);
+		XPLMSetDatad(m_f_HSL_cargo_height, mp_HSL_slingload_object->m_sling_height);
+		XPLMSetDatad(m_f_HSL_cargo_mass, mp_HSL_slingload_object->m_sling_weight);
+		XPLMSetDatad(m_f_HSL_cargo_friction_glide, mp_HSL_slingload_object->m_sling_friction_glide);
+		XPLMSetDatad(m_f_HSL_cargo_friction_static, mp_HSL_slingload_object->m_sling_friction_static);
 
 		SetVectorDataRef(m_fa_HSL_cargo_vector_size, mp_HSL_slingload_object->m_sling_size_x, mp_HSL_slingload_object->m_sling_size_y, mp_HSL_slingload_object->m_sling_size_z);
 		SetVectorDataRef(m_fa_HSL_cargo_vector_cw, mp_HSL_slingload_object->m_sling_cw_x, mp_HSL_slingload_object->m_sling_cw_y, mp_HSL_slingload_object->m_sling_cw_z);
@@ -350,10 +350,10 @@ void HRM_PlugIn::ConfigureFire()
 	XPLMSetDatai(m_i_HSL_cargo_instanced_drawing, 0);
 	XPLMSetDatai(m_i_HSL_cargo_is_bambi, true);
 
-	XPLMSetDataf(m_f_HSL_cargo_height, 1.35f);
-	XPLMSetDataf(m_f_HSL_cargo_mass, 40);
-	XPLMSetDataf(m_f_HSL_cargo_friction_glide, 0.35f);
-	XPLMSetDataf(m_f_HSL_cargo_friction_static, 0.65f);
+	XPLMSetDatad(m_f_HSL_cargo_height, 1.35f);
+	XPLMSetDatad(m_f_HSL_cargo_mass, 40);
+	XPLMSetDatad(m_f_HSL_cargo_friction_glide, 0.35f);
+	XPLMSetDatad(m_f_HSL_cargo_friction_static, 0.65f);
 
 	m_HSL_bambi_size = std::cbrt(((float) m_HSL_bambi_volume) / 1000.0f);
 
@@ -577,29 +577,29 @@ void HRM_PlugIn::MissionCreate()
 	{
 		XPLMCommandOnce(m_HSL_enable);
 
-		XPLMSetDataf(m_f_HSL_fire_radius, HRM::fire_radius);
+		XPLMSetDatad(m_f_HSL_fire_radius, HRM::fire_radius);
 		
 
 		if (m_difficutly == HRM::Easy)
 		{
-			XPLMSetDataf(m_f_HSL_fire_strength_start, HRM::fire_strength_start_easy);
-			XPLMSetDataf(m_f_HSL_fire_strength_inc, HRM::fire_strength_inc_easy);
-			XPLMSetDataf(m_f_HSL_fire_strength_max, HRM::fire_strength_max_easy);
+			XPLMSetDatad(m_f_HSL_fire_strength_start, HRM::fire_strength_start_easy);
+			XPLMSetDatad(m_f_HSL_fire_strength_inc, HRM::fire_strength_inc_easy);
+			XPLMSetDatad(m_f_HSL_fire_strength_max, HRM::fire_strength_max_easy);
 			m_fire_strength_max = HRM::fire_strength_max_easy;
 
 		}
 		else if (m_difficutly == HRM::Normal)
 		{
-			XPLMSetDataf(m_f_HSL_fire_strength_start, HRM::fire_strength_start_normal);
-			XPLMSetDataf(m_f_HSL_fire_strength_inc, HRM::fire_strength_inc_normal);
-			XPLMSetDataf(m_f_HSL_fire_strength_max, HRM::fire_strength_max_normal);
+			XPLMSetDatad(m_f_HSL_fire_strength_start, HRM::fire_strength_start_normal);
+			XPLMSetDatad(m_f_HSL_fire_strength_inc, HRM::fire_strength_inc_normal);
+			XPLMSetDatad(m_f_HSL_fire_strength_max, HRM::fire_strength_max_normal);
 			m_fire_strength_max = HRM::fire_strength_max_normal;
 		}
 		else
 		{
-			XPLMSetDataf(m_f_HSL_fire_strength_start, HRM::fire_strength_start_hard);
-			XPLMSetDataf(m_f_HSL_fire_strength_inc, HRM::fire_strength_inc_hard);
-			XPLMSetDataf(m_f_HSL_fire_strength_max, HRM::fire_strength_max_hard);
+			XPLMSetDatad(m_f_HSL_fire_strength_start, HRM::fire_strength_start_hard);
+			XPLMSetDatad(m_f_HSL_fire_strength_inc, HRM::fire_strength_inc_hard);
+			XPLMSetDatad(m_f_HSL_fire_strength_max, HRM::fire_strength_max_hard);
 			m_fire_strength_max = HRM::fire_strength_max_hard;
 		}
 
@@ -612,7 +612,7 @@ void HRM_PlugIn::MissionCreate()
 				m_cm_fire_count++;
 				XPLMSetDatad(m_d_HSL_fire_set_lat, p_object->m_latitude);
 				XPLMSetDatad(m_d_HSL_fire_set_lon, p_object->m_longitude);
-				XPLMSetDataf(m_f_HSL_fire_set_elev, p_object->m_elevation);
+				XPLMSetDatad(m_f_HSL_fire_set_elev, p_object->m_elevation);
 
 				XPLMCommandOnce(m_HSL_place_fire_coordinates);
 
@@ -2071,7 +2071,7 @@ void HRM_PlugIn::ReadDataFast()
 	m_li_paused = XPLMGetDatai(m_i_paused);
 	m_li_replay = XPLMGetDatai(m_i_replay);
 
-	m_lf_HSL_bambi_water_level = XPLMGetDataf(m_f_HSL_bambi_water_level);
+	m_lf_HSL_bambi_water_level = XPLMGetDatad(m_f_HSL_bambi_water_level);
 }
 
 void HRM_PlugIn::ReadDataSlow()
@@ -2128,10 +2128,10 @@ void HRM_PlugIn::ReadDataSlow()
 	m_li_HSL_cargo_connected = XPLMGetDatai(m_i_HSL_cargo_connected);
 	XPLMGetDatavf(m_fa_HSL_cargo_vector_position, m_lfa_HSL_cargo_vector_position, 0, 3);
 	XPLMGetDatavf(m_fa_HSL_cargo_vector_hook_pos, m_lfa_HSL_cargo_vector_hook_pos, 0, 3);
-	m_lf_HSL_rope_length = XPLMGetDataf(m_f_HSL_rope_length);
+	m_lf_HSL_rope_length = XPLMGetDatad(m_f_HSL_rope_length);
 	
 	 
-	m_lf_HSL_fire_count = XPLMGetDataf(m_f_HSL_fire_count);
+	m_lf_HSL_fire_count = XPLMGetDatad(m_f_HSL_fire_count);
 	XPLMGetDatavf(m_fa_HSL_fire_strength, m_lfa_HSL_fire_strength, 0, MAX_FIRES);
 	
 
