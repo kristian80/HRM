@@ -110,7 +110,8 @@ void HRMImguiWidget::buildInterface()
 		else
 		{
 			ImGui::Text("Select Scenery:");
-			for (int index = 0; index < pHRM->m_scenery_names.size(); index++)
+			
+			/*for (int index = 0; index < pHRM->m_scenery_names.size(); index++)
 			{
 				std::string scenery_name = pHRM->m_scenery_names[index];
 
@@ -120,15 +121,69 @@ void HRMImguiWidget::buildInterface()
 					pHRM->ReadMissions();
 				}
 
+			}*/
+
+
+
+			if (ImGui::BeginCombo("##Missions", pHRM->m_scenery_names[pHRM->m_scenery_number].c_str()))
+			{
+				for (int index = 0; index < pHRM->m_scenery_names.size(); index++)
+				{
+					bool is_selected = (pHRM->m_scenery_number == index);
+					std::string scenery_name = pHRM->m_scenery_names[index];
+
+					if (ImGui::Selectable(scenery_name.c_str(), is_selected))
+					{
+						pHRM->m_scenery_number = index;
+						pHRM->ReadMissions();
+					}
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
 			}
 		}
 
 
 
 		ImGui::Text("Difficulty:");
-		if (ImGui::RadioButton("Easy", pHRM->m_difficutly == HRM::Easy))		pHRM->m_difficutly = HRM::Easy;
+		/*if (ImGui::RadioButton("Easy", pHRM->m_difficutly == HRM::Easy))		pHRM->m_difficutly = HRM::Easy;
 		if (ImGui::RadioButton("Normal", pHRM->m_difficutly == HRM::Normal))	pHRM->m_difficutly = HRM::Normal;
-		if (ImGui::RadioButton("Hard", pHRM->m_difficutly == HRM::Hard))		pHRM->m_difficutly = HRM::Hard;
+		if (ImGui::RadioButton("Hard", pHRM->m_difficutly == HRM::Hard))		pHRM->m_difficutly = HRM::Hard;*/
+
+		const char* difficulty_items[] = { "Easy", "Normal", "Hard" };
+		if (ImGui::BeginCombo("##Mode", difficulty_items[pHRM->m_difficutly]))
+		{
+			for (int i = 0; i <= HRM::Hard; i++)
+			{
+				bool is_selected = (i == pHRM->m_difficutly);
+
+				if (ImGui::Selectable(difficulty_items[i], is_selected))
+					pHRM->m_difficutly = i;
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+		ImGui::Text("Mission Type:");
+		const char* type_items[] = { "Rescue", "Fire Fighting"};
+		if (ImGui::BeginCombo("##MissionType", type_items[(pHRM->m_fire_enable == true)]))
+		{
+			if (ImGui::Selectable(type_items[0], (pHRM->m_fire_enable == false)))
+				pHRM->m_fire_enable = false;
+
+			if (pHRM->m_fire_enable == false)
+				ImGui::SetItemDefaultFocus();
+
+			if (ImGui::Selectable(type_items[1], (pHRM->m_fire_enable == true)))
+				pHRM->m_fire_enable = true;
+
+			if (pHRM->m_fire_enable == true)
+				ImGui::SetItemDefaultFocus();
+			ImGui::EndCombo();
+		}
+
+
 
 		if (pHRM->m_fire_enable == false)
 		{
@@ -145,20 +200,39 @@ void HRMImguiWidget::buildInterface()
 			ImGui::Checkbox("Outdoor Fire", &(pHRM->m_sar_enable));
 			ImGui::Checkbox("Slope Fire", &(pHRM->m_sling_enable));
 		}
-		ImGui::Checkbox("Fire Fighting", &(pHRM->m_fire_enable));
+		//ImGui::Checkbox("Fire Fighting", &(pHRM->m_fire_enable));
 
-		
+
+		ImGui::Text("Sling Load Plugin:");
+		const char* sling_items[] = { "HSL", "X-Trident AB412" };
+		if (ImGui::BeginCombo("##SlingLoadType", sling_items[pHRM->m_sling_load_plugin]))
+		{
+			if (ImGui::Selectable(sling_items[0], (pHRM->m_sling_load_plugin == HRM::HSL)))
+				pHRM->m_sling_load_plugin = HRM::HSL;
+
+			if (pHRM->m_sling_load_plugin == HRM::HSL)
+				ImGui::SetItemDefaultFocus();
+
+			if (ImGui::Selectable(sling_items[1], (pHRM->m_sling_load_plugin == HRM::AB412)))
+				pHRM->m_sling_load_plugin = HRM::AB412;
+
+			if (pHRM->m_sling_load_plugin == HRM::AB412 == true)
+				ImGui::SetItemDefaultFocus();
+			ImGui::EndCombo();
+		}
+
+
 
 		//if /(pHRM->m_sling_enable == true) || (pHRM->m_fire_enable == true))
-		{
+		/*{
 			if (ImGui::RadioButton("HSL", pHRM->m_sling_load_plugin == HRM::HSL))
 			{
 				pHRM->m_sling_load_plugin = HRM::HSL;
-				
+
 			}
 			if (ImGui::RadioButton("AB 412", pHRM->m_sling_load_plugin == HRM::AB412))				pHRM->m_sling_load_plugin = HRM::AB412;
 
-		}
+		}*/
 
 		if ((pHRM->m_HSL_not_found == true) && (pHRM->m_sling_load_plugin == HRM::HSL))
 		{
@@ -190,7 +264,7 @@ void HRMImguiWidget::buildInterface()
 			ImGui::PopItemWidth();
 		}
 
-		
+
 
 
 
@@ -247,7 +321,7 @@ void HRMImguiWidget::buildInterface()
 			//ImGui::SameLine();
 			ImGui::InputInt("Max Distance [nm]", &(pHRM->m_cm_max_distance), 1, 1);
 			ImGui::PopItemWidth();
-		
+
 
 			ImGui::Checkbox("Set Course", &(pHRM->m_course_limit_enable));
 
@@ -266,7 +340,7 @@ void HRMImguiWidget::buildInterface()
 			ImGui::SliderInt("Search Range [m]", &(pHRM->m_cm_estimated_radius_m), HRM::search_range_min, HRM::search_range_max);
 			ImGui::PopItemWidth();
 		}
-		
+
 
 		ImGui::PushItemWidth(100);
 		ImGui::InputText("Hospital ICAO", &(pHRM->m_cm_hospital_icao));
@@ -292,34 +366,71 @@ void HRMImguiWidget::buildInterface()
 
 		ImGui::Columns(2, 0, true);*/
 
-		ImGui::Text("Global Waypoint Folder:");
+		ImGui::Text("Waypoint Folder:");
 
 		int column = 1;
 
-		for (int index = 0; index < pHRM->m_path_vector.size(); index++)
+		if (ImGui::BeginCombo("##Folder", pHRM->m_global_path.c_str()))
+		{
+			for (int index = 0; index < pHRM->m_path_vector.size(); index++)
+			{
+				bool is_selected = (pHRM->m_global_path_index == index);
+				std::string folder_name = pHRM->m_path_vector[index];
+
+				if (ImGui::Selectable(folder_name.c_str(), is_selected))
+				{
+					pHRM->m_global_path_index = index;
+					pHRM->m_global_path = folder_name;
+				}
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+
+
+
+
+
+
+
+		/*for (int index = 0; index < pHRM->m_path_vector.size(); index++)
 		{
 			std::string folder_name = pHRM->m_path_vector[index];
 
-			/*if ((index >= (pHRM->m_path_vector.size() / 2)) && (column == 1))
-			{
-				ImGui::NextColumn();
-				column = 2;
-				ImGui::Text("   ");
-			}*/
 			if (ImGui::RadioButton(folder_name.c_str(), pHRM->m_global_path_index == index))
 			{
 				pHRM->m_global_path_index = index;
 				pHRM->m_global_path = folder_name;
 			}
 
-		}
+		}*/
+		ImGui::Text("Flight Plan Format:");
+		//ImGui::PushItemWidth(80);
 
-		ImGui::Text("FPL Format:");
+		/*ImGui::Text("FPL Format:");
 		if (ImGui::RadioButton("XP11", pHRM->m_flight_plan_format == HRM::FPL_XP11))		pHRM->m_flight_plan_format = HRM::FPL_XP11;
 		ImGui::SameLine();
 		if (ImGui::RadioButton("XP10", pHRM->m_flight_plan_format == HRM::FPL_XP10))		pHRM->m_flight_plan_format = HRM::FPL_XP10;
 		ImGui::SameLine();
-		if (ImGui::RadioButton("GTN GFP", pHRM->m_flight_plan_format == HRM::FPL_GTN))		pHRM->m_flight_plan_format = HRM::FPL_GTN;
+		if (ImGui::RadioButton("GTN GFP", pHRM->m_flight_plan_format == HRM::FPL_GTN))		pHRM->m_flight_plan_format = HRM::FPL_GTN;*/
+
+		const char* fpl_items[] = { "XP11", "XP10", "GTN GFP" };
+		if (ImGui::BeginCombo("##Format", fpl_items[pHRM->m_flight_plan_format]))
+		{
+			for (int i = 0; i <= HRM::FPL_GTN; i++)
+			{
+				bool is_selected = (i == pHRM->m_flight_plan_format);
+
+				if (ImGui::Selectable(fpl_items[i], is_selected))
+					pHRM->m_flight_plan_format = i;
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+		//ImGui::PopItemWidth();
+		//ImGui::Text(std::to_string(pHRM->m_flight_plan_format).c_str());
 
 		ImGui::Columns(1, 0, true);
 
