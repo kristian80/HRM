@@ -1,6 +1,7 @@
 /*
  * This file is part of the HRM distribution (https://github.com/kristian80/HRM).
- * Copyright (c) 2019 Kristian80.
+ * Copyright (c) 2019 Kristian80, based on the Imgui Starter Window for X-Plane
+ * by William Good
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -165,8 +166,8 @@ void HRMImguiWidget::buildInterface()
 			}
 			ImGui::EndCombo();
 		}
-		ImGui::Text("Mission Type:");
-		const char* type_items[] = { "Rescue", "Fire Fighting"};
+		ImGui::Text("Mission Mode:");
+		const char* type_items[] = { "Medevac", "Fire Fighting"};
 		if (ImGui::BeginCombo("##MissionType", type_items[(pHRM->m_fire_enable == true)]))
 		{
 			if (ImGui::Selectable(type_items[0], (pHRM->m_fire_enable == false)))
@@ -183,7 +184,7 @@ void HRMImguiWidget::buildInterface()
 			ImGui::EndCombo();
 		}
 
-
+		ImGui::Text("Mission Type:");
 
 		if (pHRM->m_fire_enable == false)
 		{
@@ -200,6 +201,16 @@ void HRMImguiWidget::buildInterface()
 			ImGui::Checkbox("Outdoor Fire", &(pHRM->m_sar_enable));
 			ImGui::Checkbox("Slope Fire", &(pHRM->m_sling_enable));
 		}
+
+		if ((pHRM->m_street_enable == false) && (pHRM->m_urban_enable == false) && (pHRM->m_sar_enable == false) && (pHRM->m_sling_enable == false))
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, color_red);
+			ImGui::Text("No Mission Type Selected");
+			ImGui::PopStyleColor();
+		}
+
+
+
 		//ImGui::Checkbox("Fire Fighting", &(pHRM->m_fire_enable));
 
 

@@ -1,6 +1,7 @@
 /*
  * This file is part of the HRM distribution (https://github.com/kristian80/HRM).
- * Copyright (c) 2019 Kristian80.
+ * Copyright (c) 2019 Kristian80, based on the Imgui Starter Window for X-Plane
+ * by William Good
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
