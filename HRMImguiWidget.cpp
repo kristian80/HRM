@@ -20,6 +20,7 @@
 #include "HRM_PlugIn.h"
 #include "HRM_Mission.h"
 #include <boost/range/adaptor/reversed.hpp>
+#include <boost/algorithm/string.hpp>
 
 //#include "MyIvyConfigAircraft.h"
 
@@ -300,6 +301,8 @@ void HRMImguiWidget::buildInterface()
 			ImGui::InputText("Scenario ICAO", &(pHRM->m_cm_scenario_icao));
 			ImGui::PopItemWidth();
 
+			boost::to_upper(pHRM->m_cm_scenario_icao);
+
 			if (pHRM->m_cm_use_position == HRM::Scenario_ICAO)
 			{
 				if (pHRM->m_mission_scenario_icao_found == true)
@@ -356,6 +359,8 @@ void HRMImguiWidget::buildInterface()
 		ImGui::PushItemWidth(100);
 		ImGui::InputText("Hospital ICAO", &(pHRM->m_cm_hospital_icao));
 		ImGui::PopItemWidth();
+
+		boost::to_upper(pHRM->m_cm_hospital_icao);
 
 		if (pHRM->m_mission_hospital_icao_found == true)
 		{
@@ -449,6 +454,9 @@ void HRMImguiWidget::buildInterface()
 		{
 			ImGui::Spacing();
 			ImGui::InputText("Dep ICAO", &(pHRM->m_cm_departure_icao));
+
+			boost::to_upper(pHRM->m_cm_departure_icao);
+
 			if (pHRM->m_mission_departure_icao_found == true)
 			{
 				ImGui::PushStyleColor(ImGuiCol_Text, color_green);
@@ -473,6 +481,7 @@ void HRMImguiWidget::buildInterface()
 
 		ImGui::PushItemWidth(50);
 		ImGui::InputText("ICAO", &(pHRM->m_custom_icao));
+		boost::to_upper(pHRM->m_custom_icao);
 		ImGui::PopItemWidth();
 		ImGui::SameLine();
 		if (ImGui::Button("Save ACF Location as Hospital", ImVec2(230, 20)))
