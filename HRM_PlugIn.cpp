@@ -2222,7 +2222,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 					if ( m_d_HSL_latitude == NULL) m_d_HSL_latitude = XPLMFindDataRef("HSL/Cargo/SetLatitude");
 					if ( m_d_HSL_longitude == NULL) m_d_HSL_longitude = XPLMFindDataRef("HSL/Cargo/SetLongitude");
 
-					if (m_f_HSL_rope_length == NULL) m_f_HSL_rope_length = XPLMFindDataRef("HSL/RopeLengthNormal");
+					if (m_f_HSL_rope_length == NULL) m_f_HSL_rope_length = XPLMFindDataRef("HSL/Rope/RopeLengthNormal");
 
 					if ( m_i_HSL_cargo_is_bambi == NULL) m_i_HSL_cargo_is_bambi = XPLMFindDataRef("HSL/Cargo/IsBambiBucket");
 					if ( m_i_HSL_cargo_connected == NULL) m_i_HSL_cargo_connected = XPLMFindDataRef("HSL/Cargo/Connected");
