@@ -345,12 +345,12 @@ void HRM_PlugIn::ConfigureHSL()
 void HRM_PlugIn::ConfigureFire()
 {
 	char buffer[2048];
-	strcpy(buffer, "./oggetti elitrasportabili/Swisscreations_bambi_bucket_8ft.obj");
+	strcpy(buffer, "./Resources/plugins/HSL/bambi_bucket_v2.obj");
 	XPLMSetDatab(m_ba_HSL_cargo_path, buffer, 0, sizeof(buffer));
 	XPLMSetDatai(m_i_HSL_cargo_instanced_drawing, 0);
 	XPLMSetDatai(m_i_HSL_cargo_is_bambi, true);
 
-	XPLMSetDatad(m_f_HSL_cargo_height, 1.35f);
+	XPLMSetDatad(m_f_HSL_cargo_height, 2.3f);
 	XPLMSetDatad(m_f_HSL_cargo_mass, 40);
 	XPLMSetDatad(m_f_HSL_cargo_friction_glide, 0.35f);
 	XPLMSetDatad(m_f_HSL_cargo_friction_static, 0.65f);
@@ -368,7 +368,7 @@ void HRM_PlugIn::ConfigureFire()
 	SetVectorDataRef(m_fa_HSL_cargo_vector_cw, x, y, z);
 
 	x = 0;
-	y = 0;
+	y = 0.65f;
 	z = 0;
 	SetVectorDataRef(m_fa_HSL_cargo_offset, x, y, z);
 
