@@ -345,7 +345,7 @@ void HRM_PlugIn::ConfigureHSL()
 void HRM_PlugIn::ConfigureFire()
 {
 	char buffer[2048];
-	strcpy(buffer, "./Resources/plugins/HSL/bambi_bucket_v2.obj");
+	strcpy(buffer, "./Resources/plugins/HSL/objects/bambi_bucket_v2.obj");
 	XPLMSetDatab(m_ba_HSL_cargo_path, buffer, 0, sizeof(buffer));
 	XPLMSetDatai(m_i_HSL_cargo_instanced_drawing, 0);
 	XPLMSetDatai(m_i_HSL_cargo_is_bambi, true);
@@ -2949,6 +2949,8 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 
 								if (m_sling_load_patient_loading_time >= m_sling_load_time_min)
 								{
+									// Say patient loaded
+									IvyPlaySound(12, -1, -1);
 									m_mission_state = HRM::State_At_Patient;
 								}
 							}
@@ -3050,6 +3052,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 
 				if (mp_cm_mission->IsSlingLoad() == true)
 				{
+					IvyPlaySound(12, -1, -1);
 					if (mp_cm_mission != NULL) mp_cm_mission->RemovePatients();
 					MissionStartFlight2();
 				}
