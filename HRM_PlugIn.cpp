@@ -197,6 +197,8 @@ void HRM_PlugIn::PluginStart()
 
 	m_ivy_id = XPLMFindPluginBySignature("k80.Ivy");
 
+	RegisterIntDataref(m_patient_on_board, "HRM/patient_on_board");
+
 	m_initialized = true;
 }
 
@@ -1002,6 +1004,8 @@ void HRM_PlugIn::MissionReset()
 	m_mission_points_g_force = 0;
 	m_mission_points_difficulty = 0;
 	m_mission_points_search_range = 0;
+	
+	m_patient_on_board = false;
 
 	m_412_patient_status = HRM::Patient_Off;
 	m_412_crew_on = false;
@@ -2204,6 +2208,8 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			
 			if ((m_mission_state == HRM::State_Create_Mission) && (m_window_visible == true))
 			{
+				m_patient_on_board = false;
+
 				if (((m_sling_enable == true) || (m_fire_enable == true)) && (m_sling_load_plugin == HRM::HSL) && (m_HSL_found == false))
 				{
 					
@@ -2542,6 +2548,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			}
 			else if (m_mission_state == HRM::State_Plan_Flight)
 			{
+				m_patient_on_board = false;
 				if (m_fire_enable == true)
 				{
 					if (m_cm_fire_count > m_lf_HSL_fire_count)
@@ -2552,6 +2559,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			}
 			else if (m_mission_state == HRM::State_Pre_Flight)
 			{
+				m_patient_on_board = false;
 
 				m_mission_preflight_countdown -= m_time_delta;
 				if (m_mission_preflight_countdown <= 0)
@@ -3047,6 +3055,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			}
 			else if (m_mission_state == HRM::State_At_Patient)
 			{
+				m_patient_on_board = false;
 				// for sling load: acf_jett_is_slung
 				// create is_slingload for mission
 
@@ -3084,6 +3093,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			
 			else if (m_mission_state == HRM::State_Flight_2)
 			{
+				m_patient_on_board = true;
 				if (m_li_on_ground == 0)
 				{
 					MissionCalcGFPoints();
@@ -3188,15 +3198,16 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			}
 			else if (m_mission_state == HRM::State_Mission_Finished)
 			{
-				
+				m_patient_on_board = false;
 			}
 			else if (m_mission_state == HRM::State_Mission_Cancelled)
 			{
-				
+				m_patient_on_board = false;
 			}
 
 			else if (pHRM->m_mission_state == HRM::State_Fire_Fighting)
 			{
+				m_patient_on_board = false;
 				m_fire_time += m_time_delta;
 				if (m_lf_HSL_fire_count < 1.0f)
 				{
@@ -3205,7 +3216,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			}
 			else if (pHRM->m_mission_state == HRM::State_Fire_Extinguished)
 			{
-
+				m_patient_on_board = false;
 			}
 
 			// End of Slow Computations
@@ -3255,5 +3266,19 @@ int HRM_PlugIn::ToggleControlWindowCallback(XPLMCommandRef cmd, XPLMCommandPhase
 		}
 	}
 	return 1;
+}
+
+void HRM_PlugIn::RegisterIntDataref(bool& valueIn, std::string nameIn)
+{
+		myRegisteredDatarefs.push_back(
+			XPLMRegisterDataAccessor(nameIn.c_str(), xplmType_Int, 1, WrapReadIntCallback, WrapWriteIntCallback, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &valueIn, &valueIn)
+		);
+
+
+	if (myDataRefEditorPluginID == XPLM_NO_PLUGIN_ID) myDataRefEditorPluginID = XPLMFindPluginBySignature("xplanesdk.examples.DataRefEditor");
+	if (myDataRefEditorPluginID != XPLM_NO_PLUGIN_ID)
+	{
+		XPLMSendMessageToPlugin(myDataRefEditorPluginID, MSG_ADD_DATAREF, (void*)nameIn.c_str());
+	}
 }
 

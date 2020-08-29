@@ -42,6 +42,11 @@ public:
 
 	XPLMCommandRef myCmdRefToggleControlWindow = NULL;
 
+	std::vector<XPLMDataRef> myRegisteredDatarefs;
+	XPLMPluginID myDataRefEditorPluginID = XPLM_NO_PLUGIN_ID;
+
+	bool m_patient_on_board = false;
+
 
 	XPLMPluginID m_ivy_id = XPLM_NO_PLUGIN_ID;
 
@@ -619,5 +624,6 @@ public:
 
 	float PluginFlightLoopCallback(float elapsedMe, float elapsedSim, int counter, void * refcon);
 	int ToggleControlWindowCallback(XPLMCommandRef cmd, XPLMCommandPhase phase, void* refcon);
+	void RegisterIntDataref(bool& valueIn, std::string nameIn);
 };
 

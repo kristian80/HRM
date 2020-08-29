@@ -258,3 +258,92 @@ double calc_distance_nm(double lat1, double long1, double lat2, double long2)
 
 	return CalcRange;
 }
+
+double WrapReaddoubleCallback(void* inRefcon)
+{
+	
+		return *((double*)inRefcon);
+}
+
+void WrapWritedoubleCallback(void* inRefcon, double inValue)
+{
+	
+		* ((double*)inRefcon) = inValue;
+}
+double WrapReadDoubleCallback(void* inRefcon)
+{
+	
+		return *((double*)inRefcon);
+}
+
+void WrapWriteDoubleCallback(void* inRefcon, double inValue)
+{
+	
+		* ((double*)inRefcon) = inValue;
+}
+
+int WrapReaddoubleArrayCallback(
+	void* inRefcon,
+	float* outValues,    /* Can be NULL */
+	int                  inOffset,
+	int                  inMax)
+{
+	
+		double* array = (double*)inRefcon;
+	for (int i = 0; i < inMax; i++) outValues[i] = (float)array[i + inOffset];
+	return 10;
+}
+
+void WrapWritedoubleArrayCallback(
+	void* inRefcon,
+	float* inValues,
+	int                  inOffset,
+	int                  inCount)
+{
+	
+		double* array = (double*)inRefcon;
+	for (int i = 0; i < inCount; i++) array[i + inOffset] = inValues[i];
+
+	memcpy(array + inOffset, inValues, sizeof(double) * inCount);
+}
+
+int WrapReadIntCallback(void* inRefcon)
+{
+	
+		return (int)(*((bool*)inRefcon));
+}
+
+void WrapWriteIntCallback(void* inRefcon, int inValue)
+{
+	
+		* ((int*)inRefcon) = inValue;
+}
+
+int WrapReadStringCallback(
+	void* inRefcon,
+	void* outValue,    /* Can be NULL */
+	int                  inOffset,
+	int                  inMaxLength)
+{
+	
+		std::string* pStr = (std::string*) inRefcon;
+
+	if (pStr->size() < inMaxLength)
+	{
+		strcpy((char*)outValue, pStr->c_str());
+		return 2048;
+	}
+	return (int)pStr->length();
+
+}
+
+void WrapWriteStringCallback(
+	void* inRefcon,
+	void* inValue,
+	int                  inOffset,
+	int                  inLength)
+{
+	
+		std::string* pStr = (std::string*) inRefcon;
+	*pStr = (char*)inValue;
+}

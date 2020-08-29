@@ -724,8 +724,10 @@ void HRMImguiWidget::buildInterface()
 					if (pHRM->m_sling_load_patient_distance <= pHRM->m_cm_sling_say_distance)
 					{
 						ImGui::Spacing();
-						ImGui::Spacing();
+						ImGui::Spacing(); //m_f_HSL_rope_length
+						
 																							ImGui::Text("                         Alt: %+3.1f", pHRM->m_sling_load_patient_distance_alt);
+						if (pHRM->m_sling_load_plugin == HRM::HSL)                          ImGui::Text("                        Rope: %+3.1f", pHRM->m_lf_HSL_rope_length);
 						ImGui::Spacing();
 						ImGui::Spacing();
 						if (pHRM->m_sling_load_patient_distance_forward > 0)						ImGui::Text("                %3.1f", pHRM->m_sling_load_patient_distance_forward);
@@ -883,6 +885,11 @@ void HRMImguiWidget::buildInterface()
 			ImGui::PopStyleColor();
 
 			ImGui::Separator();
+
+			if (pHRM->mp_cm_mission->IsSlingLoad() == true)
+			{
+				if (pHRM->m_sling_load_plugin == HRM::HSL)                          ImGui::Text("                        Rope: %+3.1f", pHRM->m_lf_HSL_rope_length);
+			}
 
 			ImGui::Text("Patient Comfort Level: ");
 

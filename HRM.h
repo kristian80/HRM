@@ -81,6 +81,7 @@
 //#define MAX_GRAPH_TIME 100
 
 #define MAX_FIRES 18
+#define MSG_ADD_DATAREF 0x01000000
 
 struct HRM_Sound
 {
@@ -323,3 +324,32 @@ void WrapKeyCallback(XPLMWindowID inWindowID, char inKey, XPLMKeyFlags inFlags, 
 int WrapMouseClickCallback(XPLMWindowID inWindowID, int x, int y, XPLMMouseStatus inMouse, void * inRefcon);
 
 PLUGIN_API float WrapFlightLoopCallback(float elapsedMe, float elapsedSim, int counter, void * refcon);
+
+int WrapReaddoubleArrayCallback(
+	void* inRefcon,
+	float* outValues,    /* Can be NULL */
+	int                  inOffset,
+	int                  inMax);
+
+void WrapWritedoubleArrayCallback(
+	void* inRefcon,
+	float* inValues,
+	int                  inOffset,
+	int                  inCount);
+
+double WrapReadDoubleCallback(void* inRefcon);
+void WrapWriteDoubleCallback(void* inRefcon, double inValue);
+
+int WrapReadIntCallback(void* inRefcon);
+void WrapWriteIntCallback(void* inRefcon, int inValue);
+int WrapReadStringCallback(
+	void* inRefcon,
+	void* outValue,    /* Can be NULL */
+	int                  inOffset,
+	int                  inMaxLength);
+
+void WrapWriteStringCallback(
+	void* inRefcon,
+	void* inValue,
+	int                  inOffset,
+	int                  inLength);
