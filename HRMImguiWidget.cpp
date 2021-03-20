@@ -1185,6 +1185,8 @@ void HRMImguiWidget::buildInterface()
 
 		ImGui::Spacing();
 		ImGui::Text("Fires Remaining: %i", (int) pHRM->m_lf_HSL_fire_count);
+		if (pHRM->m_sling_load_plugin == HRM::HSL)                          ImGui::Text("                        Rope: %+3.1f", pHRM->m_lf_HSL_rope_length);
+
 
 		ImGui::Spacing();
 		ImGui::Separator();

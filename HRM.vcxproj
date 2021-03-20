@@ -49,8 +49,8 @@
     <TargetExt>.xpl</TargetExt>
     <GenerateManifest>false</GenerateManifest>
     <TargetName>win</TargetName>
-    <IncludePath>E:\Docs\Games\X-Plane\Ivy\imgui_tabs;E:\Docs\Games\X-Plane\IvyGit\Client_CPP\Ivy\SDK\CHeaders\Wrappers;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Include\;C:\Program Files %28x86%29\OpenAL 1.1 SDK\include;E:\Docs\Games\X-Plane\Ivy\imgui;E:\Docs\Games\X-Plane\Ivy\xsb_public;E:\Docs\Games\X-Plane\Ivy\boost_1_55_0\boost_1_55_0\;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files %28x86%29\OpenAL 1.1 SDK\libs\Win64;E:\Docs\Games\X-Plane\Ivy\boost_1_55_0\boost_1_55_0\libs;$(LibraryPath)</LibraryPath>
+    <IncludePath>E:Games\X-Plane\Ivy\imgui_tabs;E:\Games\X-Plane\IvyGit\Client_CPP\Ivy\SDK\CHeaders\Wrappers;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Include\;C:\Program Files %28x86%29\OpenAL 1.1 SDK\include;E:\Games\X-Plane\Ivy\imgui;E:\Games\X-Plane\Ivy\xsb_public;E:\Games\X-Plane\Ivy\boost_1_55_0\boost_1_55_0\;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files %28x86%29\OpenAL 1.1 SDK\libs\Win64;E:\Games\X-Plane\Ivy\boost_1_55_0\boost_1_55_0\libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>.\Debug\plugins\$(TargetName)\64\</OutDir>
@@ -59,8 +59,8 @@
     <TargetExt>.xpl</TargetExt>
     <GenerateManifest>false</GenerateManifest>
     <TargetName>win</TargetName>
-    <IncludePath>E:\Docs\Games\X-Plane\Ivy\imgui_tabs;E:\Docs\Games\X-Plane\IvyGit\Client_CPP\Ivy\SDK\CHeaders\Wrappers;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Include\;C:\Program Files %28x86%29\OpenAL 1.1 SDK\include;E:\Docs\Games\X-Plane\Ivy\imgui;E:\Docs\Games\X-Plane\Ivy\xsb_public;E:\Docs\Games\X-Plane\Ivy\boost_1_55_0\boost_1_55_0\;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files %28x86%29\OpenAL 1.1 SDK\libs\Win64;E:\Docs\Games\X-Plane\Ivy\boost_1_55_0\boost_1_55_0\libs;$(LibraryPath)</LibraryPath>
+    <LibraryPath>C:\Program Files %28x86%29\OpenAL 1.1 SDK\libs\Win64;E:\Games\X-Plane\Ivy\boost_1_55_0\boost_1_55_0\libs;$(LibraryPath)</LibraryPath>
+    <IncludePath>E:\Games\X-Plane\Ivy\boost_1_55_0\boost_1_55_0\;E:\Games\X-Plane\Ivy\xsb_public;E:\Games\X-Plane\Ivy\imgui;C:\Program Files %28x86%29\OpenAL 1.1 SDK\include;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Include\;E:\Games\X-Plane\IvyGit\Client_CPP\Ivy\SDK\CHeaders\Wrappers;E:Games\X-Plane\Ivy\imgui_tabs;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -151,11 +151,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="E:\Docs\Games\X-Plane\Ivy\imgui\imgui.cpp" />
-    <ClCompile Include="E:\Docs\Games\X-Plane\Ivy\imgui\imgui_draw.cpp" />
-    <ClCompile Include="E:\Docs\Games\X-Plane\Ivy\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="E:\Docs\Games\X-Plane\Ivy\imgui\misc\cpp\imgui_stdlib.cpp" />
-    <ClCompile Include="E:\Docs\Games\X-Plane\Ivy\xsb_public\ImgWindow.cpp" />
+    <ClCompile Include="..\..\Ivy\imgui\imgui.cpp" />
+    <ClCompile Include="..\..\Ivy\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\..\Ivy\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="..\..\Ivy\imgui\misc\cpp\imgui_stdlib.cpp" />
+    <ClCompile Include="..\..\Ivy\xsb_public\ImgWindow.cpp" />
     <ClCompile Include="HRMImguiWidget.cpp" />
     <ClCompile Include="HRM_ME_main.cpp" />
     <ClCompile Include="HRM_PlugIn.cpp" />
