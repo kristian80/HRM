@@ -223,6 +223,10 @@ public:
 	XPLMDataRef m_f_412_ext_long = NULL;
 	XPLMDataRef m_i_412_ext_set = NULL;
 
+	// 206L3
+
+	XPLMDataRef m_i_203_patienthide = NULL;
+
 	// HSL
 
 	HRM_Object* mp_HSL_slingload_object = NULL;
@@ -583,6 +587,7 @@ public:
 	void MissionFinish();
 	void MissionReset();
 	void MissionCancel();
+	void SetPatient(bool patient_onboard);
 
 	void FSERegister();
 	void FSELogin();

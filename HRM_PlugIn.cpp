@@ -1005,7 +1005,7 @@ void HRM_PlugIn::MissionReset()
 	m_mission_points_difficulty = 0;
 	m_mission_points_search_range = 0;
 	
-	m_patient_on_board = false;
+	SetPatient(false);
 
 	m_412_patient_status = HRM::Patient_Off;
 	m_412_crew_on = false;
@@ -1040,6 +1040,19 @@ void HRM_PlugIn::MissionCancel()
 	pHRM->m_mission_state = HRM::State_Create_Mission;
 
 	if (m_patient_off != NULL) XPLMCommandOnce(m_patient_off);
+}
+
+void HRM_PlugIn::SetPatient(bool patient_onboard)
+{
+	if (m_i_203_patienthide == NULL) m_i_203_patienthide = XPLMFindDataRef("206L3/patienthide");
+
+	if (m_i_203_patienthide != NULL)
+	{
+		if (patient_onboard == true) XPLMSetDatai(m_i_203_patienthide, 0);
+		if (patient_onboard == false) XPLMSetDatai(m_i_203_patienthide, 1);
+	}
+
+	m_patient_on_board = patient_onboard;
 }
 
 void HRM_PlugIn::FSERegister()
@@ -2208,7 +2221,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			
 			if ((m_mission_state == HRM::State_Create_Mission) && (m_window_visible == true))
 			{
-				m_patient_on_board = false;
+				SetPatient(false);
 
 				if (((m_sling_enable == true) || (m_fire_enable == true)) && (m_sling_load_plugin == HRM::HSL) && (m_HSL_found == false))
 				{
@@ -2548,7 +2561,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			}
 			else if (m_mission_state == HRM::State_Plan_Flight)
 			{
-				m_patient_on_board = false;
+				SetPatient(false);
 				if (m_fire_enable == true)
 				{
 					if (m_cm_fire_count > m_lf_HSL_fire_count)
@@ -2559,7 +2572,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			}
 			else if (m_mission_state == HRM::State_Pre_Flight)
 			{
-				m_patient_on_board = false;
+				SetPatient(false);
 
 				m_mission_preflight_countdown -= m_time_delta;
 				if (m_mission_preflight_countdown <= 0)
@@ -3055,7 +3068,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			}
 			else if (m_mission_state == HRM::State_At_Patient)
 			{
-				m_patient_on_board = false;
+				SetPatient(false);
 				// for sling load: acf_jett_is_slung
 				// create is_slingload for mission
 
@@ -3093,7 +3106,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			
 			else if (m_mission_state == HRM::State_Flight_2)
 			{
-				m_patient_on_board = true;
+				SetPatient(true);
 				if (m_li_on_ground == 0)
 				{
 					MissionCalcGFPoints();
@@ -3198,16 +3211,16 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			}
 			else if (m_mission_state == HRM::State_Mission_Finished)
 			{
-				m_patient_on_board = false;
+				SetPatient(false);
 			}
 			else if (m_mission_state == HRM::State_Mission_Cancelled)
 			{
-				m_patient_on_board = false;
+				SetPatient(false);
 			}
 
 			else if (pHRM->m_mission_state == HRM::State_Fire_Fighting)
 			{
-				m_patient_on_board = false;
+				SetPatient(false);
 				m_fire_time += m_time_delta;
 				if (m_lf_HSL_fire_count < 1.0f)
 				{
@@ -3216,7 +3229,7 @@ float HRM_PlugIn::PluginFlightLoopCallback(float elapsedMe, float elapsedSim, in
 			}
 			else if (pHRM->m_mission_state == HRM::State_Fire_Extinguished)
 			{
-				m_patient_on_board = false;
+				SetPatient(false);
 			}
 
 			// End of Slow Computations
